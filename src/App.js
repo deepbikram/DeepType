@@ -67,6 +67,17 @@ function App() {
     setGameMode(currGameMode);
   };
 
+  const handleNavigateHome = () => {
+    // Reset to default word game mode
+    setGameMode(GAME_MODE_DEFAULT);
+    // Reset all special modes
+    setIsCoffeeMode(false);
+    setIsTrainerMode(false);
+    setIsWordsCardMode(false);
+    // Scroll to top for better UX
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // localStorage persist focusedMode setting
   const [isFocusedMode, setIsFocusedMode] = useState(
     localStorage.getItem("focused-mode") === "true"
@@ -200,7 +211,11 @@ function App() {
         <DynamicBackground theme={theme}></DynamicBackground>
         <div className="canvas">
           <GlobalStyles />
-          <Logo isFocusedMode={isFocusedMode} isMusicMode={isMusicMode}></Logo>
+          <Logo 
+            isFocusedMode={isFocusedMode} 
+            isMusicMode={isMusicMode}
+            handleNavigateHome={handleNavigateHome}
+          ></Logo>
           {isWordGameMode && (
             <TypeBox
               isUltraZenMode={isUltraZenMode}

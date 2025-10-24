@@ -80,12 +80,14 @@ filter: grayscale(30%);
 position: relative;
 display: block;
 align-items: center;
-justify-content: center;
-padding-bottom: 2%;
+justify-content: flex-start;
+padding-bottom: 1%;
+padding-left: 2%;
+padding-top: 0.5%;
 top: 0;
 left:0;
 width: 100%;
-text-align: center;
+text-align: left;
 z-index: 999;
 }
 .bottom-info {
