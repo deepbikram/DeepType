@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clear LocalStorage</title>
+</head>
+<body>
+  <h1>Clearing localStorage for localhost:3000...</h1>
+  <button onclick="clearAndRedirect()">Click to Clear Storage & Reload App</button>
+  <script>
+    function clearAndRedirect() {
+      localStorage.clear();
+      alert('localStorage cleared!');
+      window.location.href = 'http://localhost:3000';
+    }
+  </script>
+  <p>Or manually clear: Open DevTools (F12) → Console → Type: <code>localStorage.clear()</code></p>
+</body>
+</html>
