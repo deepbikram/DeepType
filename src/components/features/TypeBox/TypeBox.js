@@ -898,10 +898,6 @@ const TypeBox = ({
                 {" "}
                 <span className="menu-separator"> | </span>{" "}
               </IconButton>
-            </Box>
-          )}
-          {menuEnabled && (
-            <Box display="flex" flexDirection="row">
               <IconButton
                 onClick={() => {
                   setPacingStyle(PACING_PULSE);

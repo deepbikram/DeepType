@@ -195,11 +195,11 @@ const FooterMenu = ({
         {isBottomLogoEnabled && (
           <Box display="block" flexDirection="row" className="bottom-info">
             <IconButton
-              href="https://github.com/gamer-ai/eletype-frontend/"
+              href="https://github.com/deepbikram/DeepType/"
               color="inherit"
             >
               <span>
-                Ele Types <KeyboardAltIcon fontSize="small" />
+                DeepType <KeyboardAltIcon fontSize="small" />
               </span>
             </IconButton>
           </Box>

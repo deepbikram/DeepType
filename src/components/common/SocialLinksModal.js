@@ -11,7 +11,7 @@ const SocialLinksModal = ({ status }) => {
   const [isShouldShowModal, setIsShouldShowModal] = useState(false);
 
   // URL of your typing test project
-  const projectUrl = "https://www.eletypes.com";
+  const projectUrl = "https://www.deeptype.com";
   const shareText = "Check out this typing test project!";
 
   const checkIfModalShouldBeDisplayed = () => {

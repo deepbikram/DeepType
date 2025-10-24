@@ -67,6 +67,9 @@ function App() {
     setGameMode(currGameMode);
   };
 
+  // Add a restart key to force component remount
+  const [restartKey, setRestartKey] = useState(0);
+
   const handleNavigateHome = () => {
     // Reset to default word game mode
     setGameMode(GAME_MODE_DEFAULT);
@@ -74,6 +77,8 @@ function App() {
     setIsCoffeeMode(false);
     setIsTrainerMode(false);
     setIsWordsCardMode(false);
+    // Force component remount to restart the test
+    setRestartKey(prevKey => prevKey + 1);
     // Scroll to top for better UX
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -224,7 +229,7 @@ function App() {
               soundMode={soundMode}
               theme={theme}
               soundType={soundType}
-              key="type-box"
+              key={`type-box-${restartKey}`}
               handleInputFocus={() => focusTextInput()}
             ></TypeBox>
           )}
@@ -234,7 +239,7 @@ function App() {
               isFocusedMode={isFocusedMode}
               soundMode={soundMode}
               soundType={soundType}
-              key="sentence-box"
+              key={`sentence-box-${restartKey}`}
               handleInputFocus={() => focusSentenceInput()}
             ></SentenceBox>
           )}
