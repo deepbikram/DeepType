@@ -36,28 +36,25 @@ Please submit any issues or feature requests through GitHub issues.
     - Pulse mode: the active word will have an underline pulse, which helps improve the speed typing habit.
     - Caret mode: a pacing caret, advancing character by character, which aligns normal typing habit.
 
-#### 2. Words Card (for English learners)
-
-  - Vocabulary Source
-    - GRE vocabulary
-    - TOEFL vocabulary
-    - CET6 vocabulary
-    - CET4 vocabulary
-  - Multi-Chapter Selection
-  - Words Card Navigation UI
-  - Recite Mode (word visibility off while phrase shown)
-  
-#### 3. Coffee Mode
+#### 2. Coffee Mode
 
  - Free typing mode for testing anything you want to type
 
-#### 4. QWERTY Keyboard Touch-Typing Trainer 
+#### 3. QWERTY Keyboard Touch-Typing Trainer 
 
  - A QWERTY keyboard layout UI with random key generation for touch typing practice with stats
 
-#### 5. Spotify Player
+#### 4. Spotify Player
 
- - Integrated Spotify player for background music while typing 
+ - Integrated Spotify player for background music while typing
+
+#### 5. Vocabulary Cards (for English learners)
+
+ - Flashcard-based vocabulary learning system
+ - Vocabulary sources: GRE, TOEFL, CET4, CET6
+ - Chapter-based organization for structured learning
+ - Hide word mode for self-testing
+ - Practice typing with vocabulary words
  
 #### 6. Themes Collection
 

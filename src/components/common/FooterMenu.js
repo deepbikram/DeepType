@@ -16,8 +16,8 @@ import {
   GAME_MODE_DEFAULT,
   GAME_MODE_SENTENCE,
   TRAINER_MODE,
-  WORDS_CARD_MODE,
   ULTRA_ZEN_MODE,
+  WORDS_CARD_MODE,
 } from "../../constants/Constants";
 import KeyboardAltIcon from "@mui/icons-material/KeyboardAlt";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";

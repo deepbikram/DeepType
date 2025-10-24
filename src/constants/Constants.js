@@ -15,7 +15,7 @@ const RESTART_BUTTON_TOOLTIP_TITLE_WORDSCARD =
   "[Tab] + [Enter] to quick restart the chapter";
 const SELECT_ONE_OR_MORE_CHAPTERS =
   "Open to select one or more chapters. Pick the chapters in the typing area.";
-const RECITE_MODE_TITLE = "hide the word (默写模式)";
+const RECITE_MODE_TITLE = "hide the word";
 const DEFAULT_DIFFICULTY_TOOLTIP_TITLE =
   "normal mode generates random words from top 1000 most frequently used words in English dataset.";
 const HARD_DIFFICULTY_TOOLTIP_TITLE =
