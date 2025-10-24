@@ -194,14 +194,9 @@ const FooterMenu = ({
 
         {isBottomLogoEnabled && (
           <Box display="block" flexDirection="row" className="bottom-info">
-            <IconButton
-              href="https://github.com/deepbikram/DeepType/"
-              color="inherit"
-            >
-              <span>
-                DeepType <KeyboardAltIcon fontSize="small" />
-              </span>
-            </IconButton>
+            <span>
+              DeepType <KeyboardAltIcon fontSize="small" />
+            </span>
           </Box>
         )}
       </Grid>
