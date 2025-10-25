@@ -128,7 +128,7 @@ const SentenceBox = ({
   const wpm = time < 1 ? 0 : ((rawKeyStroke / time) * 60) / 5;
 
   const reset = (newSentencesCountConstant, newLanguage, isRedo) => {
-    setStatus("watiting");
+    setStatus("waiting");
     setSentencesCountConstant(newSentencesCountConstant);
     setLanguage(newLanguage);
     if (!isRedo) {
@@ -185,10 +185,29 @@ const SentenceBox = ({
   };
 
   const handleKeyDown = (e) => {
+    const keyCode = e.keyCode;
+    
+    // Ignore modifier keys (Shift, Ctrl, Alt, Meta/Command, CapsLock, etc.)
+    if (
+      keyCode === 20 || // CapsLock
+      keyCode === 16 || // Shift
+      keyCode === 17 || // Ctrl
+      keyCode === 18 || // Alt
+      keyCode === 91 || // Left Command/Meta (macOS)
+      keyCode === 93 || // Right Command/Meta (macOS)
+      keyCode === 224 || // Meta (Firefox)
+      e.metaKey || // Meta key is pressed
+      (e.ctrlKey && keyCode !== 86 && keyCode !== 67) // Ctrl without paste/copy
+    ) {
+      e.preventDefault();
+      return;
+    }
+
+    // Play sound only for valid typing keys
     if (status !== "finished" && soundMode) {
       play();
     }
-    const keyCode = e.keyCode;
+
     // disable tab key
     if (keyCode === 9) {
       e.preventDefault();
@@ -297,6 +316,10 @@ const SentenceBox = ({
             onCompositionUpdate={handleComposition}
             onCompositionEnd={handleComposition}
             onChange={handleChange}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            data-form-type="other"
           />
           {status !== "finished" && (
             <span className="next-sentence-display">

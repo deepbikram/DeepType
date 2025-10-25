@@ -3,38 +3,44 @@ self.onmessage = function (e) {
   const {
     countDown,
     countDownConstant,
-    typingTestHistory,
     roundedWpm,
     roundedRawWpm,
     incorrectCharsCount,
+    mode,
   } = e.data;
 
   let shouldRecord = false;
-  let increment = 1;
+  let currentTime = 0;
 
-  switch (countDownConstant) {
-    case 90:
-    case 60:
-    case 30:
-      shouldRecord = countDown % 5 === 0;
-      increment = 5;
-      break;
-    case 15:
-      shouldRecord = true;
-      increment = 1;
-      break;
-    default:
-      shouldRecord = true;
-      increment = 1;
+  // In time mode, countDown decreases; in word mode, countDown increases
+  if (mode === "time") {
+    // Time mode: calculate elapsed time
+    const elapsedTime = countDownConstant - countDown;
+    
+    switch (countDownConstant) {
+      case 90:
+      case 60:
+      case 30:
+        shouldRecord = elapsedTime % 5 === 0 && elapsedTime > 0;
+        break;
+      case 15:
+        shouldRecord = elapsedTime > 0;
+        break;
+      default:
+        shouldRecord = elapsedTime > 0;
+    }
+    currentTime = elapsedTime;
+  } else {
+    // Word mode: countDown is the elapsed time (counts up)
+    shouldRecord = countDown > 0;
+    currentTime = countDown;
   }
 
   if (shouldRecord) {
-    const newTime = typingTestHistory.length * increment;
-
     const newEntry = {
       wpm: roundedWpm,
       rawWpm: roundedRawWpm,
-      time: newTime,
+      time: currentTime,
       error: incorrectCharsCount,
     };
 

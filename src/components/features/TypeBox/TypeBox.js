@@ -21,6 +21,10 @@ import {
   COUNT_DOWN_30,
   COUNT_DOWN_15,
   DEFAULT_WORDS_COUNT,
+  WORDS_COUNT_10,
+  WORDS_COUNT_25,
+  WORDS_COUNT_50,
+  WORDS_COUNT_100,
   DEFAULT_DIFFICULTY,
   HARD_DIFFICULTY,
   NUMBER_ADDON,
@@ -33,9 +37,6 @@ import {
   RESTART_BUTTON_TOOLTIP_TITLE,
   REDO_BUTTON_TOOLTIP_TITLE,
   PACING_CARET,
-  PACING_PULSE,
-  PACING_CARET_TOOLTIP,
-  PACING_PULSE_TOOLTIP,
   NUMBER_ADDON_KEY,
   SYMBOL_ADDON_KEY,
 } from "../../../constants/Constants";
@@ -60,11 +61,11 @@ const TypeBox = ({
     "timer-constant"
   );
 
-  // local persist pacing style
-  const [pacingStyle, setPacingStyle] = useLocalPersistState(
-    PACING_PULSE,
-    "pacing-style"
-  );
+  // local persist pacing style - set to PACING_CARET by default
+  const [pacingStyle] = useState(PACING_CARET);
+
+  // mode selection: "time" or "word"
+  const [mode, setMode] = useLocalPersistState("time", "typing-mode");
 
   // local persist difficulty
   const [difficulty, setDifficulty] = useLocalPersistState(
@@ -95,6 +96,20 @@ const TypeBox = ({
 
   // tab-enter restart dialog
   const [openRestart, setOpenRestart] = useState(false);
+
+  // Sync countDownConstant with mode defaults on initial load
+  useEffect(() => {
+    const storedValue = localStorage.getItem("timer-constant");
+    if (!storedValue) {
+      // No stored value, set defaults based on mode
+      if (mode === "time") {
+        setCountDownConstant(COUNT_DOWN_30);
+      } else {
+        setCountDownConstant(WORDS_COUNT_25);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const EnterkeyPressReset = (e) => {
     // press enter/or tab to reset;
@@ -132,8 +147,10 @@ const TypeBox = ({
 
   // set up words state
   const [wordsDict, setWordsDict] = useState(() => {
+    // If countDownConstant is a word count (<=100), use it; otherwise use default
+    const initialWordCount = (countDownConstant <= 100) ? countDownConstant : DEFAULT_WORDS_COUNT;
     return wordsGenerator(
-      DEFAULT_WORDS_COUNT,
+      initialWordCount,
       difficulty,
       ENGLISH_MODE,
       numberAddOn,
@@ -142,8 +159,13 @@ const TypeBox = ({
   });
 
   const words = useMemo(() => {
-    return wordsDict.map((e) => e.val);
-  }, [wordsDict]);
+    const allWords = wordsDict.map((e) => e.val);
+    // In word mode, limit to exact word count
+    if (mode === "word") {
+      return allWords.slice(0, countDownConstant);
+    }
+    return allWords;
+  }, [wordsDict, countDownConstant, mode]);
 
   const wordSpanRefs = useMemo(
     () =>
@@ -154,7 +176,11 @@ const TypeBox = ({
   );
 
   // set up timer state
-  const [countDown, setCountDown] = useState(countDownConstant);
+  // In word mode, countDown tracks elapsed time (starts at 0, counts up)
+  // In time mode, countDown tracks remaining time (starts at constant, counts down)
+  const [countDown, setCountDown] = useState(() => 
+    mode === "word" ? 0 : countDownConstant
+  );
   const [intervalId, setIntervalId] = useState(null);
 
   // set up game loop status state
@@ -227,9 +253,17 @@ const TypeBox = ({
   ) => {
     setStatus("waiting");
     if (!isRedo) {
+      // Determine word count based on the current mode
+      // In word mode, use newCountDown as the word count
+      // In time mode, use default word count
+      let wordCount = DEFAULT_WORDS_COUNT;
+      if (mode === "word") {
+        wordCount = newCountDown;
+      }
+      
       setWordsDict(
         wordsGenerator(
-          DEFAULT_WORDS_COUNT,
+          wordCount,
           difficulty,
           language,
           newNumberAddOn,
@@ -240,7 +274,9 @@ const TypeBox = ({
     setNumberAddOn(newNumberAddOn);
     setSymbolAddOn(newSymbolAddOn);
     setCountDownConstant(newCountDown);
-    setCountDown(newCountDown);
+    // In word mode, start countdown at 0 (counting up elapsed time)
+    // In time mode, start at newCountDown (counting down)
+    setCountDown(mode === "word" ? 0 : newCountDown);
     setDifficulty(difficulty);
     setLanguage(language);
     clearInterval(intervalId);
@@ -279,59 +315,66 @@ const TypeBox = ({
 
     if (status !== "started") {
       setStatus("started");
+      
       let intervalId = setInterval(() => {
         setCountDown((prevCountdown) => {
-          if (prevCountdown === 0) {
-            clearInterval(intervalId);
-            // current total extra inputs char count
-            const currCharExtraCount = Object.values(history)
-              .filter((e) => typeof e === "number")
-              .reduce((a, b) => a + b, 0);
+          // In time mode: count down and end when reaching 0
+          if (mode === "time") {
+            if (prevCountdown === 0) {
+              clearInterval(intervalId);
+              // current total extra inputs char count
+              const currCharExtraCount = Object.values(history)
+                .filter((e) => typeof e === "number")
+                .reduce((a, b) => a + b, 0);
 
-            // current correct inputs char count
-            const currCharCorrectCount = Object.values(history).filter(
-              (e) => e === true
-            ).length;
+              // current correct inputs char count
+              const currCharCorrectCount = Object.values(history).filter(
+                (e) => e === true
+              ).length;
 
-            // current correct inputs char count
-            const currCharIncorrectCount = Object.values(history).filter(
-              (e) => e === false
-            ).length;
+              // current correct inputs char count
+              const currCharIncorrectCount = Object.values(history).filter(
+                (e) => e === false
+              ).length;
 
-            // current missing inputs char count
-            const currCharMissingCount = Object.values(history).filter(
-              (e) => e === undefined
-            ).length;
+              // current missing inputs char count
+              const currCharMissingCount = Object.values(history).filter(
+                (e) => e === undefined
+              ).length;
 
-            // current total advanced char counts
-            const currCharAdvancedCount =
-              currCharCorrectCount +
-              currCharMissingCount +
-              currCharIncorrectCount;
+              // current total advanced char counts
+              const currCharAdvancedCount =
+                currCharCorrectCount +
+                currCharMissingCount +
+                currCharIncorrectCount;
 
-            // When total inputs char count is 0,
-            // that is to say, both currCharCorrectCount and currCharAdvancedCount are 0,
-            // accuracy turns out to be 0 but NaN.
-            const accuracy =
-              currCharCorrectCount === 0
-                ? 0
-                : (currCharCorrectCount / currCharAdvancedCount) * 100;
+              // When total inputs char count is 0,
+              // that is to say, both currCharCorrectCount and currCharAdvancedCount are 0,
+              // accuracy turns out to be 0 but NaN.
+              const accuracy =
+                currCharCorrectCount === 0
+                  ? 0
+                  : (currCharCorrectCount / currCharAdvancedCount) * 100;
 
-            setStatsCharCount([
-              accuracy,
-              currCharCorrectCount,
-              currCharIncorrectCount,
-              currCharMissingCount,
-              currCharAdvancedCount,
-              currCharExtraCount,
-            ]);
+              setStatsCharCount([
+                accuracy,
+                currCharCorrectCount,
+                currCharIncorrectCount,
+                currCharMissingCount,
+                currCharAdvancedCount,
+                currCharExtraCount,
+              ]);
 
-            checkPrev();
-            setStatus("finished");
+              checkPrev();
+              setStatus("finished");
 
-            return countDownConstant;
+              return countDownConstant;
+            } else {
+              return prevCountdown - 1;
+            }
           } else {
-            return prevCountdown - 1;
+            // In word mode: count up to track elapsed time
+            return prevCountdown + 1;
           }
         });
       }, 1000);
@@ -346,6 +389,69 @@ const TypeBox = ({
     setCurrInput(e.target.value);
     inputWordsHistory[currWordIndex] = e.target.value.trim();
     setInputWordsHistory(inputWordsHistory);
+
+    // Auto-finish in word mode when the last word is completed
+    if (mode === "word" && status === "started" && currWordIndex === words.length - 1) {
+      const currentWord = words[currWordIndex];
+      const trimmedInput = e.target.value.trim();
+      
+      // Check if the input exactly matches the last word
+      if (trimmedInput === currentWord) {
+        // Mark the word as correct
+        setWordsCorrect((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(currWordIndex);
+          return newSet;
+        });
+        setWordsInCorrect((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(currWordIndex);
+          return newSet;
+        });
+        
+        // Finish the test
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+        
+        const currCharExtraCount = Object.values(history)
+          .filter((e) => typeof e === "number")
+          .reduce((a, b) => a + b, 0);
+
+        const currCharCorrectCount = Object.values(history).filter(
+          (e) => e === true
+        ).length;
+
+        const currCharIncorrectCount = Object.values(history).filter(
+          (e) => e === false
+        ).length;
+
+        const currCharMissingCount = Object.values(history).filter(
+          (e) => e === undefined
+        ).length;
+
+        const currCharAdvancedCount =
+          currCharCorrectCount +
+          currCharMissingCount +
+          currCharIncorrectCount;
+
+        const accuracy =
+          currCharCorrectCount === 0
+            ? 0
+            : (currCharCorrectCount / currCharAdvancedCount) * 100;
+
+        setStatsCharCount([
+          accuracy,
+          currCharCorrectCount,
+          currCharIncorrectCount,
+          currCharMissingCount,
+          currCharAdvancedCount,
+          currCharExtraCount,
+        ]);
+
+        setStatus("finished");
+      }
+    }
   };
 
   const handleKeyUp = (e) => {
@@ -357,7 +463,7 @@ const TypeBox = ({
   useEffect(() => {
     // Initialize worker
     wpmWorkerRef.current = new Worker(
-      new URL("../../../worker/calculateWpmWorker", import.meta.url)
+      new URL("../../../worker/calculateWpmWorker.js", import.meta.url)
     );
 
     return () => {
@@ -376,6 +482,7 @@ const TypeBox = ({
         wpmKeyStrokes,
         countDownConstant,
         countDown,
+        mode,
       });
 
       wpmWorkerRef.current.onmessage = (event) => {
@@ -389,31 +496,43 @@ const TypeBox = ({
   };
 
   const handleKeyDown = (e) => {
-    if (status !== "finished" && soundMode) {
-      play();
-    }
     const key = e.key;
     const keyCode = e.keyCode;
     setCapsLocked(e.getModifierState("CapsLock"));
 
+    // Ignore modifier keys (Shift, Ctrl, Alt, Meta/Command, CapsLock, etc.)
+    if (
+      keyCode === 20 || // CapsLock
+      keyCode === 16 || // Shift
+      keyCode === 17 || // Ctrl
+      keyCode === 18 || // Alt
+      keyCode === 91 || // Left Command/Meta (macOS)
+      keyCode === 93 || // Right Command/Meta (macOS)
+      keyCode === 224 || // Meta (Firefox)
+      e.metaKey || // Meta key is pressed
+      (e.ctrlKey && keyCode !== 86 && keyCode !== 67) // Ctrl without paste/copy
+    ) {
+      e.preventDefault();
+      return;
+    }
+
+    // Play sound only for valid typing keys
+    if (status !== "finished" && soundMode) {
+      play();
+    }
+
     // keydown count for KPM calculations to all types of operations
     if (status === "started") {
       setRawKeyStrokes(rawKeyStrokes + 1);
-      if (keyCode >= 65 && keyCode <= 90) {
+      // Count all alphanumeric keys and space for WPM (not just uppercase A-Z)
+      if (
+        (keyCode >= 65 && keyCode <= 90) || // A-Z
+        (keyCode >= 48 && keyCode <= 57) || // 0-9
+        keyCode === 32 || // Space
+        (keyCode >= 186 && keyCode <= 222) // Symbols like ;, =, ,, -, ., /, etc.
+      ) {
         setWpmKeyStrokes(wpmKeyStrokes + 1);
       }
-    }
-
-    // disable Caps Lock key
-    if (keyCode === 20) {
-      e.preventDefault();
-      return;
-    }
-
-    // disable shift alt ctrl
-    if (keyCode >= 16 && keyCode <= 18) {
-      e.preventDefault();
-      return;
     }
 
     // disable tab key
@@ -448,6 +567,52 @@ const TypeBox = ({
           words[currWordIndex].split("").length > currInput.split("").length
         ) {
           setIncorrectCharsCount((prev) => prev + 1);
+        }
+
+        // Check if this is the last word in word mode
+        if (mode === "word" && currWordIndex + 1 >= words.length) {
+          // Finish the test
+          setCurrInput("");
+          clearInterval(intervalId);
+          
+          const currCharExtraCount = Object.values(history)
+            .filter((e) => typeof e === "number")
+            .reduce((a, b) => a + b, 0);
+
+          const currCharCorrectCount = Object.values(history).filter(
+            (e) => e === true
+          ).length;
+
+          const currCharIncorrectCount = Object.values(history).filter(
+            (e) => e === false
+          ).length;
+
+          const currCharMissingCount = Object.values(history).filter(
+            (e) => e === undefined
+          ).length;
+
+          const currCharAdvancedCount =
+            currCharCorrectCount +
+            currCharMissingCount +
+            currCharIncorrectCount;
+
+          const accuracy =
+            currCharCorrectCount === 0
+              ? 0
+              : (currCharCorrectCount / currCharAdvancedCount) * 100;
+
+          setStatsCharCount([
+            accuracy,
+            currCharCorrectCount,
+            currCharIncorrectCount,
+            currCharMissingCount,
+            currCharAdvancedCount,
+            currCharExtraCount,
+          ]);
+
+          checkPrev();
+          setStatus("finished");
+          return;
         }
 
         // reset currInput
@@ -546,8 +711,7 @@ const TypeBox = ({
       // reset prevInput to empty (will not go back)
       setPrevInput("");
 
-      // here count the space as effective wpm.
-      setWpmKeyStrokes(wpmKeyStrokes + 1);
+      // Space was already counted in handleKeyDown, no need to count again
       return true;
     } else {
       // console.log("detected unmatch");
@@ -565,20 +729,12 @@ const TypeBox = ({
   const getWordClassName = (wordIdx) => {
     if (wordsInCorrect.has(wordIdx)) {
       if (currWordIndex === wordIdx) {
-        if (pacingStyle === PACING_PULSE) {
-          return "word error-word active-word";
-        } else {
-          return "word error-word active-word-no-pulse";
-        }
+        return "word error-word active-word-no-pulse";
       }
       return "word error-word";
     } else {
       if (currWordIndex === wordIdx) {
-        if (pacingStyle === PACING_PULSE) {
-          return "word active-word";
-        } else {
-          return "word active-word-no-pulse";
-        }
+        return "word active-word-no-pulse";
       }
       return "word";
     }
@@ -588,7 +744,7 @@ const TypeBox = ({
 
   useEffect(() => {
     charsWorkerRef.current = new Worker(
-      new URL("../../../worker/trackCharsErrorsWorker", import.meta.url)
+      new URL("../../../worker/trackCharsErrorsWorker.js", import.meta.url)
     );
 
     charsWorkerRef.current.onmessage = (e) => {
@@ -686,13 +842,6 @@ const TypeBox = ({
     return "inactive-button";
   };
 
-  const getPacingStyleButtonClassName = (buttonPacingStyle) => {
-    if (pacingStyle === buttonPacingStyle) {
-      return "active-button";
-    }
-    return "inactive-button";
-  };
-
   const getTimerButtonClassName = (buttonTimerCountDown) => {
     if (countDownConstant === buttonTimerCountDown) {
       return "active-button";
@@ -703,224 +852,321 @@ const TypeBox = ({
   const renderResetButton = () => {
     return (
       <div className="restart-button" key="restart-button">
-        <Grid container justifyContent="center" alignItems="center">
-          <Box display="flex" flexDirection="row">
-            <IconButton
-              aria-label="redo"
-              color="secondary"
-              size="medium"
-              onClick={() => {
-                reset(
-                  countDownConstant,
-                  difficulty,
-                  language,
-                  numberAddOn,
-                  symbolAddOn,
-                  true
-                );
-              }}
-            >
-              <Tooltip title={REDO_BUTTON_TOOLTIP_TITLE}>
-                <UndoIcon />
-              </Tooltip>
-            </IconButton>
-            <IconButton
-              aria-label="restart"
-              color="secondary"
-              size="medium"
-              onClick={() => {
-                reset(
-                  countDownConstant,
-                  difficulty,
-                  language,
-                  numberAddOn,
-                  symbolAddOn,
-                  false
-                );
-              }}
-            >
-              <Tooltip title={RESTART_BUTTON_TOOLTIP_TITLE}>
-                <RestartAltIcon />
-              </Tooltip>
-            </IconButton>
-            {menuEnabled && (
-              <>
-                <IconButton
-                  onClick={() => {
-                    reset(
-                      COUNT_DOWN_90,
-                      difficulty,
-                      language,
-                      numberAddOn,
-                      symbolAddOn,
-                      false
-                    );
-                  }}
-                >
-                  <span className={getTimerButtonClassName(COUNT_DOWN_90)}>
-                    {COUNT_DOWN_90}
-                  </span>
-                </IconButton>
-                <IconButton
-                  onClick={() => {
-                    reset(
-                      COUNT_DOWN_60,
-                      difficulty,
-                      language,
-                      numberAddOn,
-                      symbolAddOn,
-                      false
-                    );
-                  }}
-                >
-                  <span className={getTimerButtonClassName(COUNT_DOWN_60)}>
-                    {COUNT_DOWN_60}
-                  </span>
-                </IconButton>
-                <IconButton
-                  onClick={() => {
-                    reset(
-                      COUNT_DOWN_30,
-                      difficulty,
-                      language,
-                      numberAddOn,
-                      symbolAddOn,
-                      false
-                    );
-                  }}
-                >
-                  <span className={getTimerButtonClassName(COUNT_DOWN_30)}>
-                    {COUNT_DOWN_30}
-                  </span>
-                </IconButton>
-                <IconButton
-                  onClick={() => {
-                    reset(
-                      COUNT_DOWN_15,
-                      difficulty,
-                      language,
-                      numberAddOn,
-                      symbolAddOn,
-                      false
-                    );
-                  }}
-                >
-                  <span className={getTimerButtonClassName(COUNT_DOWN_15)}>
-                    {COUNT_DOWN_15}
-                  </span>
-                </IconButton>
-              </>
-            )}
-          </Box>
-          {menuEnabled && (
-            <Box display="flex" flexDirection="row">
+        <Grid container justifyContent="center" alignItems="center" direction="column" spacing={2}>
+          <Grid item>
+            <Box display="flex" flexDirection="row" gap={1}>
               <IconButton
-                onClick={() => {
-                  reset(
-                    countDownConstant,
-                    DEFAULT_DIFFICULTY,
-                    language,
-                    numberAddOn,
-                    symbolAddOn,
-                    false
-                  );
-                }}
-              >
-                <Tooltip
-                  title={DEFAULT_DIFFICULTY_TOOLTIP_TITLE}
-                >
-                  <span
-                    className={getDifficultyButtonClassName(DEFAULT_DIFFICULTY)}
-                  >
-                    {DEFAULT_DIFFICULTY}
-                  </span>
-                </Tooltip>
-              </IconButton>
-              <IconButton
-                onClick={() => {
-                  reset(
-                    countDownConstant,
-                    HARD_DIFFICULTY,
-                    language,
-                    numberAddOn,
-                    symbolAddOn,
-                    false
-                  );
-                }}
-              >
-                <Tooltip
-                  title={HARD_DIFFICULTY_TOOLTIP_TITLE}
-                >
-                  <span
-                    className={getDifficultyButtonClassName(HARD_DIFFICULTY)}
-                  >
-                    {HARD_DIFFICULTY}
-                  </span>
-                </Tooltip>
-              </IconButton>
-              <IconButton
-                onClick={() => {
-                  reset(
-                    countDownConstant,
-                    difficulty,
-                    language,
-                    !numberAddOn,
-                    symbolAddOn,
-                    false
-                  );
-                }}
-              >
-                <Tooltip title={NUMBER_ADDON_TOOLTIP_TITLE}>
-                  <span className={getAddOnButtonClassName(numberAddOn)}>
-                    {NUMBER_ADDON}
-                  </span>
-                </Tooltip>
-              </IconButton>
-              <IconButton
+                aria-label="redo"
+                color="secondary"
+                size="medium"
                 onClick={() => {
                   reset(
                     countDownConstant,
                     difficulty,
                     language,
                     numberAddOn,
-                    !symbolAddOn,
+                    symbolAddOn,
+                    true
+                  );
+                }}
+              >
+                <Tooltip title={REDO_BUTTON_TOOLTIP_TITLE}>
+                  <UndoIcon />
+                </Tooltip>
+              </IconButton>
+              <IconButton
+                aria-label="restart"
+                color="secondary"
+                size="medium"
+                onClick={() => {
+                  reset(
+                    countDownConstant,
+                    difficulty,
+                    language,
+                    numberAddOn,
+                    symbolAddOn,
                     false
                   );
                 }}
               >
-                <Tooltip title={SYMBOL_ADDON_TOOLTIP_TITLE}>
-                  <span className={getAddOnButtonClassName(symbolAddOn)}>
-                    {SYMBOL_ADDON}
-                  </span>
-                </Tooltip>
-              </IconButton>
-              <IconButton>
-                {" "}
-                <span className="menu-separator"> | </span>{" "}
-              </IconButton>
-              <IconButton
-                onClick={() => {
-                  setPacingStyle(PACING_PULSE);
-                }}
-              >
-                <Tooltip title={PACING_PULSE_TOOLTIP}>
-                  <span className={getPacingStyleButtonClassName(PACING_PULSE)}>
-                    {PACING_PULSE}
-                  </span>
-                </Tooltip>
-              </IconButton>
-              <IconButton
-                onClick={() => {
-                  setPacingStyle(PACING_CARET);
-                }}
-              >
-                <Tooltip title={PACING_CARET_TOOLTIP}>
-                  <span className={getPacingStyleButtonClassName(PACING_CARET)}>
-                    {PACING_CARET}
-                  </span>
+                <Tooltip title={RESTART_BUTTON_TOOLTIP_TITLE}>
+                  <RestartAltIcon />
                 </Tooltip>
               </IconButton>
             </Box>
+          </Grid>
+          {menuEnabled && (
+            <Grid item>
+              <div className="controls-container">
+                <Box display="flex" flexDirection="row" gap={0.5} alignItems="center" flexWrap="wrap" justifyContent="center">
+                  <IconButton 
+                    size="small" 
+                    onClick={() => {
+                      setMode("time");
+                      reset(
+                        COUNT_DOWN_30,
+                        difficulty,
+                        language,
+                        numberAddOn,
+                        symbolAddOn,
+                        false
+                      );
+                    }}
+                  >
+                    <span className={mode === "time" ? "active-button" : "inactive-button"}>time</span>
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => {
+                      setMode("word");
+                      reset(
+                        WORDS_COUNT_25,
+                        difficulty,
+                        language,
+                        numberAddOn,
+                        symbolAddOn,
+                        false
+                      );
+                    }}
+                  >
+                    <span className={mode === "word" ? "active-button" : "inactive-button"}>word</span>
+                  </IconButton>
+                  <IconButton size="small">
+                    <span className="menu-separator"> | </span>
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      reset(
+                        countDownConstant,
+                        DEFAULT_DIFFICULTY,
+                        language,
+                        numberAddOn,
+                        symbolAddOn,
+                        false
+                      );
+                    }}
+                  >
+                    <Tooltip
+                      title={DEFAULT_DIFFICULTY_TOOLTIP_TITLE}
+                    >
+                      <span
+                        className={getDifficultyButtonClassName(DEFAULT_DIFFICULTY)}
+                      >
+                        {DEFAULT_DIFFICULTY}
+                      </span>
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      reset(
+                        countDownConstant,
+                        HARD_DIFFICULTY,
+                        language,
+                        numberAddOn,
+                        symbolAddOn,
+                        false
+                      );
+                    }}
+                  >
+                    <Tooltip
+                      title={HARD_DIFFICULTY_TOOLTIP_TITLE}
+                    >
+                      <span
+                        className={getDifficultyButtonClassName(HARD_DIFFICULTY)}
+                      >
+                        {HARD_DIFFICULTY}
+                      </span>
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      reset(
+                        countDownConstant,
+                        difficulty,
+                        language,
+                        !numberAddOn,
+                        symbolAddOn,
+                        false
+                      );
+                    }}
+                  >
+                    <Tooltip title={NUMBER_ADDON_TOOLTIP_TITLE}>
+                      <span className={getAddOnButtonClassName(numberAddOn)}>
+                        {NUMBER_ADDON}
+                      </span>
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      reset(
+                        countDownConstant,
+                        difficulty,
+                        language,
+                        numberAddOn,
+                        !symbolAddOn,
+                        false
+                      );
+                    }}
+                  >
+                    <Tooltip title={SYMBOL_ADDON_TOOLTIP_TITLE}>
+                      <span className={getAddOnButtonClassName(symbolAddOn)}>
+                        {SYMBOL_ADDON}
+                      </span>
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton size="small">
+                    <span className="menu-separator"> | </span>
+                  </IconButton>
+                  {mode === "time" ? (
+                    <>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            COUNT_DOWN_90,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(COUNT_DOWN_90)}>
+                          {COUNT_DOWN_90}
+                        </span>
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            COUNT_DOWN_60,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(COUNT_DOWN_60)}>
+                          {COUNT_DOWN_60}
+                        </span>
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            COUNT_DOWN_30,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(COUNT_DOWN_30)}>
+                          {COUNT_DOWN_30}
+                        </span>
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            COUNT_DOWN_15,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(COUNT_DOWN_15)}>
+                          {COUNT_DOWN_15}
+                        </span>
+                      </IconButton>
+                    </>
+                  ) : (
+                    <>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            WORDS_COUNT_10,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(WORDS_COUNT_10)}>
+                          {WORDS_COUNT_10}
+                        </span>
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            WORDS_COUNT_25,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(WORDS_COUNT_25)}>
+                          {WORDS_COUNT_25}
+                        </span>
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            WORDS_COUNT_50,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(WORDS_COUNT_50)}>
+                          {WORDS_COUNT_50}
+                        </span>
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          reset(
+                            WORDS_COUNT_100,
+                            difficulty,
+                            language,
+                            numberAddOn,
+                            symbolAddOn,
+                            false
+                          );
+                        }}
+                      >
+                        <span className={getTimerButtonClassName(WORDS_COUNT_100)}>
+                          {WORDS_COUNT_100}
+                        </span>
+                      </IconButton>
+                    </>
+                  )}
+                </Box>
+              </div>
+            </Grid>
           )}
         </Grid>
       </div>
@@ -1000,6 +1246,9 @@ const TypeBox = ({
             rawKeyStrokes={rawKeyStrokes}
             wpmKeyStrokes={wpmKeyStrokes}
             renderResetButton={renderResetButton}
+            mode={mode}
+            currWordIndex={currWordIndex}
+            totalWords={words.length}
           ></Stats>
           {status !== "finished" && renderResetButton()}
         </div>
@@ -1012,6 +1261,11 @@ const TypeBox = ({
           onKeyUp={(e) => handleKeyUp(e)}
           value={currInput}
           onChange={(e) => UpdateInput(e)}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+          data-form-type="other"
         />
         <Dialog
           PaperProps={{

@@ -70,7 +70,7 @@ margin-bottom: 20px; /* Add space below description */
 margin-top: 20px; /* Add space above icons */
 }
 .dynamicBackground {
-heigh: 100%;
+height: 100%;
 width: 100%;
 z-index: -999;
 position: fixed;
@@ -347,7 +347,8 @@ min-width: 5%;
 .restart-button{
 margin-left: auto;
 margin-right: auto;
-width: 8em
+width: 100%;
+max-width: 900px;
 }
 .restart-button button:hover{
 transform:scale(1.18);
@@ -407,6 +408,12 @@ border-radius: 16px;
 color: ${({ theme }) => theme.textTypeBox};
 background-color: none;
 font-size: 16px;
+}
+.menu-label{
+color: ${({ theme }) => theme.textTypeBox};
+font-size: 14px;
+opacity: 0.6;
+cursor: default;
 }
 .dialog{
 background: ${({ theme }) => theme.background};
@@ -525,7 +532,7 @@ height: 240px;
 overflow: hidden;
 margin-left: auto;
 margin-right: auto;
-position: relative
+position: relative;
 top: 10%;
 @media only screen 
 and (min-device-width: 375px) 
@@ -755,5 +762,24 @@ line-height: 6px;
 display: flex;
 align-items: center;
 gap: 8px;
+}
+
+.controls-container {
+background: transparent;
+border: 1px solid ${({ theme }) => theme.textTypeBox};
+border-radius: 16px;
+padding: 10px 24px;
+margin: 0 auto;
+display: inline-block;
+opacity: 0.7;
+}
+
+.controls-row {
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+gap: 8px;
+margin: 8px 0;
 }
 `;

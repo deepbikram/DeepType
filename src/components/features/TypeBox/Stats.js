@@ -25,16 +25,19 @@ const Stats = ({
   renderResetButton,
   setIncorrectCharsCount,
   incorrectCharsCount,
+  mode,
+  currWordIndex,
+  totalWords,
 }) => {
   const [roundedRawWpm, setRoundedRawWpm] = useState(0);
   const roundedWpm = Math.round(wpm);
 
   useEffect(() => {
     const worker = new Worker(
-      new URL("../../../worker/calculateRawWpmWorker", import.meta.url)
+      new URL("../../../worker/calculateRawWpmWorker.js", import.meta.url)
     );
 
-    worker.postMessage({ rawKeyStrokes, countDownConstant, countDown });
+    worker.postMessage({ rawKeyStrokes, countDownConstant, countDown, mode });
 
     worker.onmessage = function (e) {
       setRoundedRawWpm(e.data);
@@ -42,7 +45,7 @@ const Stats = ({
     };
 
     return () => worker.terminate();
-  }, [rawKeyStrokes, countDownConstant, countDown]);
+  }, [rawKeyStrokes, countDownConstant, countDown, mode]);
 
   const initialTypingTestHistory = [
     {
@@ -74,9 +77,15 @@ const Stats = ({
   }, [status]);
 
   useEffect(() => {
-    if (status === "started" && countDown < countDownConstant) {
+    // In time mode: track when countDown < countDownConstant (counting down)
+    // In word mode: track when countDown > 0 (counting up)
+    const shouldTrack = mode === "time" 
+      ? (status === "started" && countDown < countDownConstant)
+      : (status === "started" && countDown > 0);
+    
+    if (shouldTrack) {
       const worker = new Worker(
-        new URL("../../../worker/trackHistoryWorker", import.meta.url)
+        new URL("../../../worker/trackHistoryWorker.js", import.meta.url)
       );
 
       worker.postMessage({
@@ -86,6 +95,7 @@ const Stats = ({
         roundedWpm,
         roundedRawWpm,
         incorrectCharsCount,
+        mode,
       });
 
       worker.onmessage = function (e) {
@@ -182,14 +192,19 @@ const Stats = ({
     </div>
   );
 
-  const renderRawKpm = () => (
-    <div>
-      <p className="stats-title">KPM</p>
-      <h2 className="stats-value">
-        {Math.round((rawKeyStrokes / Math.max(countDownConstant, 1)) * 60.0)}
-      </h2>
-    </div>
-  );
+  const renderRawKpm = () => {
+    // In time mode: use countDownConstant (the test duration)
+    // In word mode: use countDown (the elapsed time)
+    const timeInSeconds = mode === "time" ? countDownConstant : Math.max(countDown, 1);
+    return (
+      <div>
+        <p className="stats-title">KPM</p>
+        <h2 className="stats-value">
+          {Math.round((rawKeyStrokes / timeInSeconds) * 60.0)}
+        </h2>
+      </div>
+    );
+  };
 
   const renderLanguage = () => (
     <div>
@@ -203,7 +218,9 @@ const Stats = ({
   const renderTime = () => (
     <div>
       <p className="stats-title">Time</p>
-      <h2 className="stats-value">{countDownConstant} s</h2>
+      <h2 className="stats-value">
+        {mode === "time" ? `${countDownConstant} s` : `${countDown} s`}
+      </h2>
     </div>
   );
 
@@ -273,7 +290,8 @@ const Stats = ({
     <>
       {status !== "finished" && (
         <>
-          <h3>{countDown} s</h3>
+          {mode === "time" && <h3>{countDown} s</h3>}
+          {mode === "word" && <h3>{Math.max(0, countDownConstant - currWordIndex)} words</h3>}
           <h3>WPM: {Math.round(wpm)}</h3>
         </>
       )}

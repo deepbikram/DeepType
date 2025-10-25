@@ -46,6 +46,10 @@ const FreeTypingBox = ({ spaces = 4, textAreaRef, soundMode, soundType }) => {
         className="textarea"
         spellCheck="false"
         placeholder=" ... "
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        data-form-type="other"
       />
     </div>
   );
