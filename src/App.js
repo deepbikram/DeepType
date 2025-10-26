@@ -8,6 +8,7 @@ import Logo from "./components/common/Logo";
 import MusicPlayerSnackbar from "./components/features/MusicPlayer/MusicPlayerSnackbar";
 import FooterMenu from "./components/common/FooterMenu";
 import FreeTypingBox from "./components/features/FreeTypingBox";
+import MultiplayerRace from "./components/features/MultiplayerMode/MultiplayerRace";
 import {
   GAME_MODE,
   GAME_MODE_DEFAULT,
@@ -77,6 +78,7 @@ function App() {
     setIsCoffeeMode(false);
     setIsTrainerMode(false);
     setIsWordsCardMode(false);
+    setIsMultiplayerMode(false);
     // Force component remount to restart the test
     setRestartKey(prevKey => prevKey + 1);
     // Scroll to top for better UX
@@ -113,6 +115,9 @@ function App() {
     false,
     "IsInWordsCardMode"
   );
+
+  // multiplayer mode setting
+  const [isMultiplayerMode, setIsMultiplayerMode] = useState(false);
 
   // State to track if user is actively typing (for elegant UI hiding)
   const [isTyping, setIsTyping] = useState(false);
@@ -175,6 +180,14 @@ function App() {
     setIsTrainerMode(false);
     setIsCoffeeMode(false);
     setIsWordsCardMode(!isWordsCardMode);
+  };
+
+  const toggleMultiplayerMode = () => {
+    setIsMultiplayerMode(true);
+    setIsTrainerMode(false);
+    setIsCoffeeMode(false);
+    setIsWordsCardMode(false);
+    setGameMode(GAME_MODE_DEFAULT);
   };
 
   // Handle typing activity for elegant UI hiding
@@ -272,12 +285,17 @@ function App() {
         <DynamicBackground theme={theme}></DynamicBackground>
         <div className="canvas" onMouseMove={handleMouseMove}>
           <GlobalStyles />
-          <Logo 
-            isFocusedMode={isFocusedMode} 
-            isMusicMode={isMusicMode}
-            handleNavigateHome={handleNavigateHome}
-            showControls={showControls}
-          ></Logo>
+          {isMultiplayerMode ? (
+            <MultiplayerRace onNavigateHome={handleNavigateHome} />
+          ) : (
+            <>
+              <Logo 
+                isFocusedMode={isFocusedMode} 
+                isMusicMode={isMusicMode}
+                handleNavigateHome={handleNavigateHome}
+                showControls={showControls}
+                handleMultiplayerClick={toggleMultiplayerMode}
+              ></Logo>
           {isWordGameMode && (
             <TypeBox
               isUltraZenMode={isUltraZenMode}
@@ -360,6 +378,8 @@ function App() {
             isFocusedMode={isFocusedMode}
             onMouseLeave={() => focusTextInput()}
           ></MusicPlayerSnackbar>
+            </>
+          )}
         </div>
       </>
     </ThemeProvider>
