@@ -6,6 +6,7 @@ import { Tooltip } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import SelfImprovementIcon from "@mui/icons-material/SelfImprovement";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import Dangerous from "@mui/icons-material/Dangerous";
 import Select from "../utils/Select";
 import {
   FOCUS_MODE,
@@ -18,6 +19,7 @@ import {
   TRAINER_MODE,
   ULTRA_ZEN_MODE,
   WORDS_CARD_MODE,
+  HARDCORE_MODE_TOOLTIP,
 } from "../../constants/Constants";
 import KeyboardAltIcon from "@mui/icons-material/KeyboardAlt";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
@@ -39,6 +41,8 @@ const FooterMenu = ({
   toggleMusicMode,
   toggleUltraZenMode,
   isUltraZenMode,
+  toggleHardcoreMode,
+  isHardcoreMode,
   toggleCoffeeMode,
   isMusicMode,
   isFocusedMode,
@@ -50,6 +54,7 @@ const FooterMenu = ({
   isWordsCardMode,
   isWordGameMode,
   toggleWordsCardMode,
+  showControls = true,
 }) => {
   const isBottomLogoEnabled = isFocusedMode && !isMusicMode;
   const isTypeTestEnabled = !isCoffeeMode && !isTrainerMode && !isWordsCardMode;
@@ -73,6 +78,11 @@ const FooterMenu = ({
       position="static"
       color="transparent"
       className={`bottomBar ${isFocusedMode && "fade-element"}`}
+      style={{
+        visibility: showControls ? 'visible' : 'hidden',
+        transition: 'visibility 0s, opacity 0.3s ease-in-out',
+        opacity: showControls ? 1 : 0,
+      }}
     >
       <Grid container justifyContent="space-between" alignItems="center">
         <Box display="flex" flexDirection="row">
@@ -85,6 +95,22 @@ const FooterMenu = ({
             onChange={handleThemeChange}
             menuPlacement="top"
           ></Select>
+
+          {isTypeTestEnabled && (
+            <IconButton onClick={toggleHardcoreMode}>
+              <Tooltip 
+                title={
+                  <span style={{ whiteSpace: "pre-line" }}>
+                    {HARDCORE_MODE_TOOLTIP}
+                  </span>
+                }
+              >
+                <span className={getModeButtonClassName(isHardcoreMode)}>
+                  <Dangerous fontSize="medium" sx={{ color: isHardcoreMode ? '#a78bfa' : 'inherit' }}></Dangerous>
+                </span>
+              </Tooltip>
+            </IconButton>
+          )}
 
           <IconButton onClick={toggleFocusedMode}>
             <Tooltip title={FOCUS_MODE}>

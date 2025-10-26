@@ -77,6 +77,9 @@ const PACING_PULSE_TOOLTIP =
 const NUMBER_ADDON_KEY = "number";
 const SYMBOL_ADDON_KEY = "symbol";
 
+const HARDCORE_MODE = "Hardcore mode";
+const HARDCORE_MODE_TOOLTIP = "You fails if you press a single incorrect key\n(meaning you have to achieve 100% accuracy).";
+
 export {
   DEFAULT_WORDS_COUNT,
   WORDS_COUNT_10,
@@ -130,4 +133,6 @@ export {
   NUMBER_ADDON_KEY,
   SYMBOL_ADDON_KEY,
   ULTRA_ZEN_MODE,
+  HARDCORE_MODE,
+  HARDCORE_MODE_TOOLTIP,
 };

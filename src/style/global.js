@@ -6,6 +6,19 @@ export const GlobalStyles = createGlobalStyle`
 *::before {
 box-sizing: border-box;
 }
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
 body {
 display: flex;
 flex-direction: column;

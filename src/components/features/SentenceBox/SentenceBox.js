@@ -32,6 +32,10 @@ const SentenceBox = ({
   isFocusedMode,
   soundMode,
   soundType,
+  onTypingActivity,
+  onTestComplete,
+  onTestReset,
+  showControls,
 }) => {
   const [play] = useSound(SOUND_MAP[soundType], { volume: 0.5 });
 
@@ -83,6 +87,36 @@ const SentenceBox = ({
 
   // set up game loop status state
   const [status, setStatus] = useState("waiting");
+
+  // Track if input is focused
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Handle "press any key to focus" when input is not focused
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // If input is not focused and status is not finished, focus the input
+      if (!isFocused && status !== "finished" && sentenceInputRef.current) {
+        // Ignore modifier keys only
+        if (
+          e.keyCode === 20 || // CapsLock
+          e.keyCode === 16 || // Shift
+          e.keyCode === 17 || // Ctrl
+          e.keyCode === 18 || // Alt
+          e.keyCode === 91 || // Left Command/Meta (macOS)
+          e.keyCode === 93 || // Right Command/Meta (macOS)
+          e.keyCode === 224    // Meta (Firefox)
+        ) {
+          return;
+        }
+        sentenceInputRef.current.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [isFocused, status, sentenceInputRef]);
 
   // set up stop watch in seconds
   const [time, setTime] = useState(0);
@@ -148,6 +182,11 @@ const SentenceBox = ({
       incorrect: 0,
       extra: 0,
     });
+    
+    // Notify parent that test was reset
+    if (onTestReset) {
+      onTestReset();
+    }
   };
 
   const start = () => {
@@ -186,6 +225,11 @@ const SentenceBox = ({
 
   const handleKeyDown = (e) => {
     const keyCode = e.keyCode;
+    
+    // Notify parent about typing activity
+    if (onTypingActivity && status === "started") {
+      onTypingActivity();
+    }
     
     // Ignore modifier keys (Shift, Ctrl, Alt, Meta/Command, CapsLock, etc.)
     if (
@@ -236,6 +280,11 @@ const SentenceBox = ({
         if (currSentenceIndex + 1 === sentencesCountConstant) {
           setStatus("finished");
           setTimeRunning(false);
+          
+          // Notify parent that test is complete
+          if (onTestComplete) {
+            onTestComplete();
+          }
           return;
         }
         setCurrSentenceIndex(currSentenceIndex + 1);
@@ -295,15 +344,48 @@ const SentenceBox = ({
   };
 
   return (
-    <div onClick={handleInputFocus}>
+    <div onClick={handleInputFocus} style={{ position: 'relative' }}>
       <div className="type-box-sentence">
         <Stack spacing={2}>
-          <div className="sentence-display-field">
-            {currSentence.split("").map((char, idx) => (
-              <span key={"word" + idx} className={getCharClassName(idx, char)}>
-                {char}
-              </span>
-            ))}
+          <div style={{ position: 'relative' }}>
+            {!isFocused && status !== "finished" && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: '1.5rem',
+                color: '#d1d5db',
+                opacity: 0.9,
+                pointerEvents: 'none',
+                zIndex: 10,
+                textAlign: 'center',
+                userSelect: 'none',
+                transition: 'opacity 0.3s ease-in-out',
+                fontWeight: '400',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z" fill="#a78bfa" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Click here or press any key to focus
+              </div>
+            )}
+            <div 
+              className="sentence-display-field"
+              style={{
+                filter: (!isFocused && status !== "finished") ? 'blur(5px)' : 'none',
+                transition: 'filter 0.3s ease-in-out',
+              }}
+            >
+              {currSentence.split("").map((char, idx) => (
+                <span key={"word" + idx} className={getCharClassName(idx, char)}>
+                  {char}
+                </span>
+              ))}
+            </div>
           </div>
           <input
             key="hidden-sentence-input"
@@ -312,6 +394,8 @@ const SentenceBox = ({
             spellCheck="false"
             className="sentence-input-field"
             onKeyDown={(e) => handleKeyDown(e)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onCompositionStart={handleComposition}
             onCompositionUpdate={handleComposition}
             onCompositionEnd={handleComposition}
@@ -365,7 +449,12 @@ const SentenceBox = ({
                 </Tooltip>
               </IconButton>
               {menuEnabled && (
-                <>
+                <div style={{ 
+                  visibility: showControls ? 'visible' : 'hidden',
+                  opacity: showControls ? 1 : 0,
+                  transition: 'opacity 0.3s ease-in-out',
+                  display: 'inline-flex',
+                }}>
                   <IconButton
                     onClick={() => {
                       reset(DEFAULT_SENTENCES_COUNT, language, false);
@@ -422,7 +511,7 @@ const SentenceBox = ({
                       </span>
                     </Tooltip>
                   </IconButton>
-                </>
+                </div>
               )}
             </Box>
           </Grid>

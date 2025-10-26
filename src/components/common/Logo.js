@@ -1,7 +1,7 @@
 import React from "react";
 import KeyboardAltIcon from "@mui/icons-material/KeyboardAlt";
 
-const Logo = ({ isFocusedMode, handleNavigateHome }) => {
+const Logo = ({ isFocusedMode, handleNavigateHome, showControls = true }) => {
 
   const handleLogoClick = () => {
     if (handleNavigateHome) {
@@ -10,7 +10,13 @@ const Logo = ({ isFocusedMode, handleNavigateHome }) => {
   };
 
   return (
-    <div className="header" style={{visibility: isFocusedMode ? 'hidden' : 'visible' }}>
+    <div 
+      className="header" 
+      style={{
+        visibility: isFocusedMode ? 'hidden' : 'visible',
+        // Logo always visible - don't hide it during typing
+      }}
+    >
       <h1 
         onClick={handleLogoClick}
         style={{ 
@@ -21,11 +27,12 @@ const Logo = ({ isFocusedMode, handleNavigateHome }) => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '8px',
-          margin: '10px 0'
+          margin: '10px 0',
+          color: '#a78bfa',
         }}
         title="Go to home"
       >
-        DeepType <KeyboardAltIcon fontSize="medium" />
+        DeepType <KeyboardAltIcon fontSize="medium" style={{ color: '#a78bfa' }} />
       </h1>
     </div>
   );

@@ -96,6 +96,12 @@ function App() {
     localStorage.getItem("ultra-zen-mode") === "true"
   );
 
+  // hardcoreMode setting
+  const [isHardcoreMode, setIsHardcoreMode] = useLocalPersistState(
+    false,
+    "hardcore-mode"
+  );
+
   // coffeeMode setting
   const [isCoffeeMode, setIsCoffeeMode] = useState(false);
 
@@ -107,6 +113,11 @@ function App() {
     false,
     "IsInWordsCardMode"
   );
+
+  // State to track if user is actively typing (for elegant UI hiding)
+  const [isTyping, setIsTyping] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const typingTimeoutRef = useRef(null);
 
   const isWordGameMode =
     gameMode === GAME_MODE_DEFAULT &&
@@ -144,6 +155,10 @@ function App() {
     setIsUltraZenMode(!isUltraZenMode);
   };
 
+  const toggleHardcoreMode = () => {
+    setIsHardcoreMode(!isHardcoreMode);
+  };
+
   const toggleCoffeeMode = () => {
     setIsCoffeeMode(!isCoffeeMode);
     setIsTrainerMode(false);
@@ -160,6 +175,47 @@ function App() {
     setIsTrainerMode(false);
     setIsCoffeeMode(false);
     setIsWordsCardMode(!isWordsCardMode);
+  };
+
+  // Handle typing activity for elegant UI hiding
+  const handleTypingActivity = () => {
+    setIsTyping(true);
+    setShowControls(false);
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set timeout to detect when typing stops (1.5 seconds of inactivity)
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 1500);
+  };
+
+  // Handle mouse movement to show controls
+  const handleMouseMove = () => {
+    if (!isTyping) {
+      setShowControls(true);
+    }
+  };
+
+  // Handle test completion to show controls
+  const handleTestComplete = () => {
+    setIsTyping(false);
+    setShowControls(true);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+  };
+
+  // Reset controls visibility on test reset
+  const handleTestReset = () => {
+    setIsTyping(false);
+    setShowControls(true);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
   };
 
   useEffect(() => {
@@ -214,16 +270,18 @@ function App() {
     <ThemeProvider theme={theme}>
       <>
         <DynamicBackground theme={theme}></DynamicBackground>
-        <div className="canvas">
+        <div className="canvas" onMouseMove={handleMouseMove}>
           <GlobalStyles />
           <Logo 
             isFocusedMode={isFocusedMode} 
             isMusicMode={isMusicMode}
             handleNavigateHome={handleNavigateHome}
+            showControls={showControls}
           ></Logo>
           {isWordGameMode && (
             <TypeBox
               isUltraZenMode={isUltraZenMode}
+              isHardcoreMode={isHardcoreMode}
               textInputRef={textInputRef}
               isFocusedMode={isFocusedMode}
               soundMode={soundMode}
@@ -231,6 +289,10 @@ function App() {
               soundType={soundType}
               key={`type-box-${restartKey}`}
               handleInputFocus={() => focusTextInput()}
+              onTypingActivity={handleTypingActivity}
+              onTestComplete={handleTestComplete}
+              onTestReset={handleTestReset}
+              showControls={showControls}
             ></TypeBox>
           )}
           {isSentenceGameMode && (
@@ -241,6 +303,10 @@ function App() {
               soundType={soundType}
               key={`sentence-box-${restartKey}`}
               handleInputFocus={() => focusSentenceInput()}
+              onTypingActivity={handleTypingActivity}
+              onTestComplete={handleTestComplete}
+              onTestReset={handleTestReset}
+              showControls={showControls}
             ></SentenceBox>
           )}
           {isCoffeeMode && !isTrainerMode && !isWordsCardMode && (
@@ -269,6 +335,8 @@ function App() {
               soundOptions={soundOptions}
               soundType={soundType}
               toggleUltraZenMode={toggleUltraZenMode}
+              toggleHardcoreMode={toggleHardcoreMode}
+              isHardcoreMode={isHardcoreMode}
               handleSoundTypeChange={handleSoundTypeChange}
               handleThemeChange={handleThemeChange}
               toggleFocusedMode={toggleFocusedMode}
@@ -284,6 +352,7 @@ function App() {
               toggleTrainerMode={toggleTrainerMode}
               isWordsCardMode={isWordsCardMode}
               toggleWordsCardMode={toggleWordsCardMode}
+              showControls={showControls}
             ></FooterMenu>
           </div>
           <MusicPlayerSnackbar

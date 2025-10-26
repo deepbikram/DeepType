@@ -225,6 +225,25 @@ const Stats = ({
   );
 
   const renderWpm = () => {
+    // Calculate WPM based on final stats instead of averaging samples
+    if (status === "finished" && statsCharCount.length > 0) {
+      const correctChars = statsCharCount[1]; // correct character count
+      // Use the same elapsed time calculation as the worker
+      // In time mode: countDownConstant is the test duration
+      // In word mode: countDown is the elapsed time
+      const timeInSeconds = mode === "time" 
+        ? Math.max(countDownConstant, 1) 
+        : Math.max(countDown, 1);
+      const finalWpm = (correctChars / 5) / (timeInSeconds / 60.0);
+      return (
+        <div>
+          <h2 className="primary-stats-title">WPM</h2>
+          <h1 className="primary-stats-value">{Math.round(finalWpm)}</h1>
+        </div>
+      );
+    }
+    
+    // During test, use average
     const totalWpm = data.map((e) => e.wpm).reduce((a, b) => a + b, 0);
     const averageWpm = data.length > 1 ? totalWpm / (data.length - 1) : 0;
     return (
