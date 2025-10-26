@@ -1,3 +1,10 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /clear-storage.html
+
+# Sitemap
+Sitemap: https://deeptype.tech/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1

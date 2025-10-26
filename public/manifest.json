@@ -1,6 +1,7 @@
 {
   "short_name": "DeepType",
-  "name": "DeepType - Elegant Typing Test",
+  "name": "DeepType - Professional Typing Speed Test & Practice",
+  "description": "Improve your typing speed with DeepType - a beautiful typing test and practice tool with WPM tracking, accuracy metrics, and multiple practice modes.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +11,24 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#a78bfa",
+  "background_color": "#1a1a1a",
+  "orientation": "any",
+  "categories": ["education", "productivity", "utilities"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
 }

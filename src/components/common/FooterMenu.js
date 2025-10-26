@@ -82,10 +82,11 @@ const FooterMenu = ({
         visibility: showControls ? 'visible' : 'hidden',
         transition: 'visibility 0s, opacity 0.3s ease-in-out',
         opacity: showControls ? 1 : 0,
+        boxShadow: 'none',
       }}
     >
-      <Grid container justifyContent="space-between" alignItems="center">
-        <Box display="flex" flexDirection="row">
+      <Grid container justifyContent="space-between" alignItems="center" wrap="nowrap">
+        <Box display="flex" flexDirection="row" alignItems="center" gap={0.5}>
           <Select
             classNamePrefix="Select"
             value={themesOptions.find((e) => e.value.label === theme.label)}

@@ -33,6 +33,13 @@ margin: 0;
 font-family: ${({ theme }) => theme.fontFamily};
 transition: all 0.25s linear;
 text-shadow: ${({ theme }) => theme.textShadow};
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+@media only screen and (max-width: 768px) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overflow-x: hidden;
+}
 }
 .canvas {
 align-items: center;
@@ -45,6 +52,18 @@ width: 100vw;
 z-index: 1;
 padding: 1rem;
 transition: padding-top .125s;
+@media only screen and (max-width: 768px) {
+  padding: 0.5rem 0.5rem 200px 0.5rem;
+  gap: 0.75rem;
+  min-height: 100vh;
+  justify-content: space-between;
+}
+@media only screen and (max-width: 480px) {
+  padding: 0.5rem 0.5rem 220px 0.5rem;
+  gap: 0.5rem;
+  min-height: 100vh;
+  justify-content: space-between;
+}
 }
 .fixed-overlay {
 position: fixed;
@@ -67,6 +86,18 @@ position: relative; /* To position the close button */
 width: 80%; /* Increased width */
 max-width: 600px; /* Max width to keep it from getting too large */
 height: auto; /* Allow height to grow with content */
+@media only screen and (max-width: 768px) {
+  width: 90%;
+  padding: 30px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+@media only screen and (max-width: 480px) {
+  width: 95%;
+  padding: 20px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
 }
 .close-button {
 color: ${({ theme }) => theme.textTypeBox};
@@ -102,6 +133,16 @@ left:0;
 width: 100%;
 text-align: left;
 z-index: 999;
+@media only screen and (max-width: 768px) {
+  padding-left: 5%;
+  padding-top: 3%;
+  padding-bottom: 1%;
+}
+@media only screen and (max-width: 480px) {
+  padding-left: 5%;
+  padding-top: 4%;
+  padding-bottom: 1%;
+}
 }
 .bottom-info {
 color: ${({ theme }) => theme.title};
@@ -112,6 +153,10 @@ display: block;
 }
 button {
 display: block;
+@media only screen and (max-width: 768px) {
+  min-height: 44px;
+  min-width: 44px;
+}
 }
 h1 {
 color: ${({ theme }) => theme.title};
@@ -128,6 +173,31 @@ opacity: 0.7;
 }
 .bottomBar {
 z-index: 999;
+@media only screen and (max-width: 768px) {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 0 24px 0;
+  background: linear-gradient(to top, ${({ theme }) => theme.background} 85%, transparent);
+  border-top: 1px solid rgba(167, 139, 250, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+@media only screen and (max-width: 480px) {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 18px 0 22px 0;
+  background: linear-gradient(to top, ${({ theme }) => theme.background} 85%, transparent);
+  border-top: 1px solid rgba(167, 139, 250, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
 }
 
 .stats-overlay {
@@ -184,6 +254,22 @@ margin-left: auto;
 margin-right: auto;
 color: ${({ theme }) => theme.stats};
 bottom: 10%;
+@media only screen and (max-width: 768px) {
+  max-width: 88%;
+  margin-top: 30px;
+  margin-bottom: 220px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+@media only screen and (max-width: 480px) {
+  max-width: 90%;
+  margin-top: 25px;
+  margin-bottom: 240px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
 }
 
 .stats-footer {
@@ -235,12 +321,29 @@ animation: blinkingCursor 2s infinite;;
 .type-box {
 display: block;
 max-width: 1000px;
-height: 140px;
+height: 160px;
 overflow: hidden;
 margin-left: auto;
 margin-right: auto;
 position: relative;
 top: 10%;
+scroll-behavior: smooth;
+@media only screen and (max-width: 768px) {
+  max-width: 88%;
+  height: 300px;
+  top: 0%;
+  margin-top: 80px;
+  margin-bottom: 240px;
+  padding: 0;
+}
+@media only screen and (max-width: 480px) {
+  max-width: 90%;
+  height: 320px;
+  top: 0%;
+  margin-top: 70px;
+  margin-bottom: 260px;
+  padding: 0;
+}
 @media only screen 
 and (min-device-width: 375px) 
 and (max-device-width: 812px) 
@@ -251,12 +354,27 @@ width: 60%;
 }
 .words{
 color: ${({ theme }) => theme.textTypeBox};
-font-size: 28px;
+font-size: 26px;
 display: flex;
 flex-wrap: wrap;
 width: 100%;
 align-content: center;
 user-select: none;
+will-change: transform;
+letter-spacing: 0.5px;
+line-height: 1.6;
+@media only screen and (max-width: 768px) {
+  font-size: 21px;
+  letter-spacing: 0.8px;
+  line-height: 2.0;
+  justify-content: flex-start;
+}
+@media only screen and (max-width: 480px) {
+  font-size: 19px;
+  letter-spacing: 0.6px;
+  line-height: 2.2;
+  justify-content: flex-start;
+}
 }
 .word{
 margin: 5px 5px;
@@ -265,86 +383,90 @@ padding-right: 2px;
 border-bottom: 1px solid transparent;
 border-top: 1px solid transparent;
 scroll-margin: 4px;
+scroll-behavior: smooth;
+@media only screen and (max-width: 768px) {
+  margin: 8px 6px;
+}
+@media only screen and (max-width: 480px) {
+  margin: 7px 5px;
+}
 }
 .active-word{
-animation: blinkingBackground 2s infinite;
 border-top: 1px solid transparent;
-border-bottom: 1px solid;
-@keyframes blinkingBackground{
-0%		{ border-bottom-color: ${({ theme }) => theme.stats};}
-25%		{ border-bottom-color: ${({ theme }) => theme.textTypeBox};}
-50%		{ border-bottom-color: ${({ theme }) => theme.stats};}
-75%		{border-bottom-color: ${({ theme }) => theme.textTypeBox};}
-100%	{border-bottom-color: ${({ theme }) => theme.stats};}
-};
+border-bottom: 1px solid transparent;
 scroll-margin: 4px;
+scroll-behavior: smooth;
 }
 .active-word-no-pulse{
 border-top: 1px solid transparent;
 border-bottom: 1px solid transparent;
 scroll-margin: 4px;
+scroll-behavior: smooth;
 }
 .error-word{
-border-bottom: 1px solid red;
+border-bottom: 1px solid transparent;
 scroll-margin: 4px;
+scroll-behavior: smooth;
 }
 .char{
 border-left: 1px solid transparent;
 border-right: 1px solid transparent;
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .correct-char{
 border-left: 1px solid transparent;
 border-right: 1px solid transparent;
 color: ${({ theme }) => theme.text};
-
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .error-char{
 border-left: 1px solid transparent;
 border-right: 1px solid transparent;
 color: red;
-
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .caret-char-left{
-border-left: 1px solid ${({ theme }) => theme.stats};
+border-left: 2px solid ${({ theme }) => theme.stats};
 border-right: 1px solid transparent;
-
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .caret-char-left-start{
 
-border-left: 1px solid;
+border-left: 2px solid ${({ theme }) => theme.stats};
 border-right: 1px solid transparent;
-animation: blinkingCaretLeft 2s infinite;
-animation-timing-function: ease;
-@keyframes blinkingCaretLeft{
-0%		{ border-left-color: ${({ theme }) => theme.stats};}
-25%		{ border-left-color: ${({ theme }) => theme.textTypeBox};}
-50%		{ border-left-color: ${({ theme }) => theme.stats};}
-75%		{ border-left-color: ${({ theme }) => theme.textTypeBox};}
-100%	{ border-left-color: ${({ theme }) => theme.stats};}
-}
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .caret-char-right{
-border-right: 1px solid ${({ theme }) => theme.stats};
+border-right: 2px solid ${({ theme }) => theme.stats};
 border-left: 1x solid transparent;
-
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .caret-char-right-correct{
 color: ${({ theme }) => theme.text};
-border-right: 1px solid ${({ theme }) => theme.stats};
+border-right: 2px solid ${({ theme }) => theme.stats};
 border-left: 1px solid transparent;
-
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .caret-char-right-error{
 color: red;
-border-right: 1px solid ${({ theme }) => theme.stats};
+border-right: 2px solid ${({ theme }) => theme.stats};
 border-left: 1px solid transparent;
-
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 .caret-extra-char-right-error{
 color: red;
-border-right: 1px solid ${({ theme }) => theme.stats};
+border-right: 2px solid ${({ theme }) => theme.stats};
 border-left: 1px solid transparent;
-
+transition: border-color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1), 
+            color 0.05s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .hidden-input{
@@ -362,10 +484,19 @@ margin-left: auto;
 margin-right: auto;
 width: 100%;
 max-width: 900px;
+@media only screen and (max-width: 768px) {
+  max-width: 95%;
+}
+@media only screen and (max-width: 480px) {
+  max-width: 100%;
+}
 }
 .restart-button button:hover{
 transform:scale(1.18);
 transition:0.3s;
+@media only screen and (max-width: 768px) {
+  transform:scale(1.1);
+}
 }
 .alert{
 opacity: 0.3;
@@ -518,9 +649,21 @@ caret-color: ${({ theme }) => theme.stats};
 outline: none;
 padding: 0;
 font-family: ${({ theme }) => theme.fontFamily};
+@media only screen and (max-width: 768px) {
+  font-size: 22px;
+}
+@media only screen and (max-width: 480px) {
+  font-size: 18px;
+}
 }
 .sentence-display-field{
 font-size: 28px;
+@media only screen and (max-width: 768px) {
+  font-size: 22px;
+}
+@media only screen and (max-width: 480px) {
+  font-size: 18px;
+}
 }
 .wordcard-word-display-field{
 font-size: 64px;
@@ -785,6 +928,12 @@ padding: 10px 24px;
 margin: 0 auto;
 display: inline-block;
 opacity: 0.7;
+transition: all 0.3s ease;
+}
+
+.controls-container:hover {
+opacity: 1;
+border-color: ${({ theme }) => theme.stats};
 }
 
 .controls-row {

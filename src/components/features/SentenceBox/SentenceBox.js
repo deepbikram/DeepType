@@ -354,29 +354,30 @@ const SentenceBox = ({
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                fontSize: '1.5rem',
+                fontSize: window.innerWidth < 768 ? '0.9rem' : '1.5rem',
                 color: '#d1d5db',
-                opacity: 0.9,
+                opacity: 0.7,
                 pointerEvents: 'none',
                 zIndex: 10,
                 textAlign: 'center',
                 userSelect: 'none',
                 transition: 'opacity 0.3s ease-in-out',
-                fontWeight: '400',
+                fontWeight: '300',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                gap: window.innerWidth < 768 ? '8px' : '12px',
+                padding: '0 20px',
               }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width={window.innerWidth < 768 ? "16" : "24"} height={window.innerWidth < 768 ? "16" : "24"} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z" fill="#a78bfa" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                Click here or press any key to focus
+                {window.innerWidth < 768 ? "Tap to start" : "Click here or press any key to focus"}
               </div>
             )}
             <div 
               className="sentence-display-field"
               style={{
-                filter: (!isFocused && status !== "finished") ? 'blur(5px)' : 'none',
+                filter: (!isFocused && status !== "finished") ? (window.innerWidth < 768 ? 'blur(0.5px)' : 'blur(5px)') : 'none',
                 transition: 'filter 0.3s ease-in-out',
               }}
             >
