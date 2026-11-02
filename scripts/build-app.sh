@@ -17,7 +17,7 @@ cp "$binary_dir/DeepType" "$app/Contents/MacOS/DeepType"
 cp Resources/Info.plist "$app/Contents/Info.plist"
 version="$(tr -d '[:space:]' < VERSION)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" -c "Set :CFBundleVersion $version" "$app/Contents/Info.plist"
-icon_sources=(Sources/DeepType/Design/BrandMark.swift scripts/render-app-icon.swift Resources/Branding/AppIcon-1024.png)
+icon_sources=(Sources/DeepType/Design/BrandMark.swift scripts/render-app-icon.swift)
 icon=.build/AppIcon.icns
 if [[ -f Resources/Branding/AppIcon-1024.png ]] && [[ ! -f "$icon" || Resources/Branding/AppIcon-1024.png -nt "$icon" ]]; then
     iconset="$(mktemp -d)/AppIcon.iconset"
