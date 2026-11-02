@@ -49,7 +49,14 @@ struct DeepTypeApp: App {
         }
         MenuBarExtra(isInserted: Binding(
             get: { delegate.model.settings.showMenuBarIcon },
-            set: { delegate.model.settings.showMenuBarIcon = $0; delegate.model.saveSettings() }
+            // ponytail: SwiftUI re-pushes the value on every MenuBarExtra
+            // reconfigure; writing it back unconditionally re-invalidates the
+            // graph and spins the main thread forever in saveSettings IPC.
+            set: {
+                guard delegate.model.settings.showMenuBarIcon != $0 else { return }
+                delegate.model.settings.showMenuBarIcon = $0
+                delegate.model.saveSettings()
+            }
         )) {
             MenuContents(model: delegate.model)
         } label: {
@@ -154,7 +161,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         start()
-        if model.settings.showInDock { NSApplication.shared.activate(ignoringOtherApps: true) }
+        // ponytail: accessory apps never activate themselves; without this the
+        // first-run onboarding window opens behind everything and looks dead.
+        if model.settings.showInDock || model.needsOnboarding { NSApplication.shared.activate(ignoringOtherApps: true) }
     }
 
     func start() {

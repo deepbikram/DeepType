@@ -1322,8 +1322,11 @@ final class AppModel {
     func saveSettings() {
         // ponytail: keep one visible entry point so hiding both can't lock the user out.
         if !settings.showInDock, !settings.showMenuBarIcon { settings.showMenuBarIcon = true }
-        if !settings.sendToClaude { holdBackReturn() }
-        if startsServices { applyDockVisibility() }
+    if !settings.sendToClaude { holdBackReturn() }
+    // ponytail: setActivationPolicy deadlocks when called re-entrantly from a
+    // MenuBarExtra KVO update (main thread wedged in a LaunchServices XPC
+    // round-trip); hop a turn so the view update finishes first.
+    if startsServices { Task { [weak self] in self?.applyDockVisibility() } }
         syncShiftShortcut()
         do {
             let registered = SMAppService.mainApp.status == .enabled
@@ -1332,14 +1335,17 @@ final class AppModel {
                 else { try SMAppService.mainApp.unregister() }
             }
             try persist()
-        } catch {
-            settings.launchAtLogin = SMAppService.mainApp.status == .enabled
-            statusMessage = "Could not save settings: \(error.localizedDescription)"
-        }
-        applyAppearance()
-        if startsServices { meetingDetector.isEnabled = settings.detectMeetings }
-        meetings.remembersVoices = settings.rememberVoices
-        onPresentationChange?()
+    } catch {
+        let registered = SMAppService.mainApp.status == .enabled
+        // ponytail: same-value @Observable writes still notify and re-trigger the
+        // MenuBarExtra update they came from; only write on real change.
+        if settings.launchAtLogin != registered { settings.launchAtLogin = registered }
+        statusMessage = "Could not save settings: \(error.localizedDescription)"
+    }
+    applyAppearance()
+    if startsServices { meetingDetector.isEnabled = settings.detectMeetings }
+    if meetings.remembersVoices != settings.rememberVoices { meetings.remembersVoices = settings.rememberVoices }
+    onPresentationChange?()
     }
 
     func applyDockVisibility() {
@@ -1419,15 +1425,21 @@ final class AppModel {
 
     func refreshPermissions() {
         refreshCalendars()
-        microphoneGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
-        let previouslyGranted = accessibilityGranted
-        accessibilityGranted = AXIsProcessTrusted()
-        if previouslyGranted != accessibilityGranted, settings.shortcut.isModifierOnly, !isBusy { registerShortcut() }
+        // ponytail: same-value @Observable writes still invalidate the view graph,
+        // which re-runs MenuBarExtra configuration -> saveSettings -> slow IPC.
+        let mic = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+        if microphoneGranted != mic { microphoneGranted = mic }
+        let ax = AXIsProcessTrusted()
+        if accessibilityGranted != ax {
+            accessibilityGranted = ax
+            if settings.shortcut.isModifierOnly, !isBusy { registerShortcut() }
+        }
     }
 
     private func refreshCalendars() {
-        calendarGranted = CalendarEvents.isAuthorized
-        guard settings.useCalendar, calendarGranted else { calendarAccounts = []; return }
+        let authorized = CalendarEvents.isAuthorized
+        if calendarGranted != authorized { calendarGranted = authorized }
+        guard settings.useCalendar, calendarGranted else { if !calendarAccounts.isEmpty { calendarAccounts = [] }; return }
         Task { calendarAccounts = await calendarEvents.accounts() }
     }
 

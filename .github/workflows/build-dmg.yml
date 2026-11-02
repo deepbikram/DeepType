@@ -33,8 +33,14 @@ jobs:
           BIN_DIR="$(swift build -c release --arch arm64 --show-bin-path)"
           VERSION="$(tr -d '[:space:]' < VERSION)"
           DMG="DeepType-${VERSION}-arm64.dmg"
-          # ponytail: plain hdiutil on CI (create-dmg.sh fancy layout needs macOS 27+ diskutil).
-          hdiutil create -volname "DeepType" -srcfolder "$BIN_DIR/DeepType.app" \
+          # ponytail: plain hdiutil on CI (create-dmg.sh fancy layout needs macOS 27+ diskutil
+          # plus a Finder session, both unavailable headless). Staged folder keeps the
+          # Applications symlink so drag-and-drop install works.
+          STAGE="$(mktemp -d)/dmgroot"
+          mkdir -p "$STAGE"
+          cp -R "$BIN_DIR/DeepType.app" "$STAGE/"
+          ln -s /Applications "$STAGE/Applications"
+          hdiutil create -volname "DeepType" -srcfolder "$STAGE" \
             -ov -format UDZO "release-$DMG"
           mv "release-$DMG" "$DMG"
           echo "DMG=$DMG" >> "$GITHUB_ENV"
