@@ -25,6 +25,11 @@ jobs:
           xcodebuild -version
           swift --version
 
+      - name: Check tag matches VERSION
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          [[ "$GITHUB_REF_NAME" == "v$(tr -d '[:space:]' < VERSION)" ]] || { echo "tag $GITHUB_REF_NAME != VERSION $(cat VERSION)"; exit 1; }
+
       - name: Build app (release, arm64)
         run: bash scripts/build-app.sh release arm64
 

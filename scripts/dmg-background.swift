@@ -2,20 +2,19 @@ import AppKit
 import SwiftUI
 
 let size = CGSize(width: 642, height: 406)
-let ink = Color(red: 0.078, green: 0.078, blue: 0.086)
+let leftSlot = CGPoint(x: 164, y: 165)
+let rightSlot = CGPoint(x: 478, y: 165)
 
 struct Arrow: Shape {
     func path(in rect: CGRect) -> Path {
-        let tip = CGPoint(x: 386, y: 152)
-        let control = CGPoint(x: 352, y: 134)
-        let angle = atan2(tip.y - control.y, tip.x - control.x)
+        let tip = CGPoint(x: 362, y: 150)
         return Path { path in
-            path.move(to: CGPoint(x: 256, y: 156))
-            path.addCurve(to: tip, control1: CGPoint(x: 290, y: 128), control2: control)
-            for side in [-1.0, 1.0] {
-                path.move(to: tip)
-                path.addLine(to: CGPoint(x: tip.x - 13 * cos(angle + side * 0.6), y: tip.y - 13 * sin(angle + side * 0.6)))
-            }
+            path.move(to: CGPoint(x: 280, y: 150))
+            path.addLine(to: CGPoint(x: tip.x - 10, y: tip.y))
+            path.move(to: tip)
+            path.addLine(to: CGPoint(x: tip.x - 14, y: tip.y - 11))
+            path.move(to: tip)
+            path.addLine(to: CGPoint(x: tip.x - 14, y: tip.y + 11))
         }
     }
 }
@@ -23,25 +22,40 @@ struct Arrow: Shape {
 struct Background: View {
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.973, green: 0.965, blue: 0.949), Color(red: 0.929, green: 0.918, blue: 0.894)],
+            LinearGradient(colors: [Color(red: 0.27, green: 0.27, blue: 0.31), Color(red: 0.14, green: 0.14, blue: 0.17)],
                            startPoint: .top, endPoint: .bottom)
+            // ponytail: diagonal pinstripe texture, same trick as the linen original.
             Canvas { context, canvas in
-                for x in stride(from: 9.0, to: canvas.width, by: 18) {
-                    for y in stride(from: 9.0, to: canvas.height, by: 18) {
-                        context.fill(Path(ellipseIn: CGRect(x: x - 0.8, y: y - 0.8, width: 1.6, height: 1.6)), with: .color(ink.opacity(0.09)))
-                    }
+                context.translateBy(x: canvas.width / 2, y: canvas.height / 2)
+                context.rotate(by: .degrees(-45))
+                let diag = (canvas.width + canvas.height) / 2
+                for x in stride(from: -diag, through: diag, by: 5) {
+                    context.stroke(
+                        Path { $0.move(to: CGPoint(x: x, y: -diag)); $0.addLine(to: CGPoint(x: x, y: diag)) },
+                        with: .color(.white.opacity(0.022)),
+                        lineWidth: 1)
                 }
             }
-            .mask(RadialGradient(colors: [.clear, .black], center: UnitPoint(x: 0.5, y: 0.42), startRadius: 120, endRadius: 380))
+            ForEach([leftSlot, rightSlot], id: \.x) { center in
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(.white.opacity(0.05))
+                    .frame(width: 200, height: 220)
+                    .position(center)
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(.white.opacity(0.22), lineWidth: 2)
+                    .frame(width: 200, height: 220)
+                    .position(center)
+            }
             Arrow()
-                .stroke(ink.opacity(0.75), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-            Text("Drag to Applications")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(ink.opacity(0.5))
+                .stroke(.white.opacity(0.6), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+            Text("SIMPLY DRAG")
+                .font(.system(size: 13, weight: .semibold))
+                .tracking(3)
+                .foregroundStyle(.white.opacity(0.55))
                 .position(x: 321, y: 190)
         }
         .frame(width: size.width, height: size.height)
-        .environment(\.colorScheme, .light)
+        .environment(\.colorScheme, .dark)
     }
 }
 
