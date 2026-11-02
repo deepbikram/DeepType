@@ -1,0 +1,56 @@
+name: Build DMG
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-dmg:
+    runs-on: macos-26
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          ls /Applications | grep -i xcode || true
+          XCODE="$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)"
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          swift --version
+
+      - name: Build app (release, arm64)
+        run: bash scripts/build-app.sh release arm64
+
+      - name: Package DMG
+        run: |
+          BIN_DIR="$(swift build -c release --arch arm64 --show-bin-path)"
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          DMG="DeepType-${VERSION}-arm64.dmg"
+          # ponytail: plain hdiutil on CI (create-dmg.sh fancy layout needs macOS 27+ diskutil).
+          hdiutil create -volname "DeepType" -srcfolder "$BIN_DIR/DeepType.app" \
+            -ov -format UDZO "release-$DMG"
+          mv "release-$DMG" "$DMG"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeepType-macOS-arm64
+          path: DeepType-*.dmg
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$DMG" \
+            --title "DeepType $GITHUB_REF_NAME" \
+            --notes "Unsigned build (no notarization): on first launch, right-click DeepType.app > Open, or System Settings > Privacy & Security > Open Anyway." \
+            --latest=false || gh release upload "$GITHUB_REF_NAME" "$DMG" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
