@@ -4,6 +4,15 @@ All notable changes to DeepType are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/). The current version lives in `VERSION`.
 
+## [0.1.9] - 2026-11-02
+
+### Fixed
+- Accessibility is detected as soon as you grant it in System Settings, without restarting DeepType first. A grant made while the app was open now applies in the same session, and the shortcut row updates on its own.
+- Update checks, the About window and the release feed point at the renamed GitHub repository, so Sparkle finds new versions again.
+
+### Changed
+- The DMG window is 640×420 with the app and Applications icons centred in their slots and a clearer "Drag DeepType into Applications" label.
+
 ## [Unreleased]
 
 ### Added

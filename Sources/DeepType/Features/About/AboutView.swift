@@ -6,7 +6,7 @@ struct AboutView: View {
     let shortcut: DictationShortcut
     static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development"
     static let changelog = URL(string: "https://deeptype.com/changelog")!
-    private let repository = URL(string: "https://github.com/opennookorg/deeptype")!
+    private let repository = URL(string: "https://github.com/deepbikram/DeepType")!
 
     var body: some View {
         Form {

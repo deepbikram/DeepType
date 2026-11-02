@@ -149,7 +149,7 @@ final class AppModel {
     var speakerDetectionInstalled = false
     var speakerDetectionQueued = false
     var microphoneGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
-    var accessibilityGranted = AXIsProcessTrusted()
+    var accessibilityGranted = AppModel.liveAccessibilityTrust()
     var calendarGranted = CalendarEvents.isAuthorized
     var calendarAccounts: [CalendarAccount] = []
     @ObservationIgnored let calendarEvents = CalendarEvents()
@@ -200,6 +200,10 @@ final class AppModel {
     @ObservationIgnored private var feedbackSound: NSSound?
     @ObservationIgnored private var storageIsReadable = true
     @ObservationIgnored private var installedModelIDs: Set<String> = []
+    /// Whether Accessibility was missing when DeepType started; a grant that appears
+    /// later in the same session needs a relaunch for the AX APIs to pick it up.
+    @ObservationIgnored private var accessibilityDeniedAtLaunch = !AppModel.liveAccessibilityTrust()
+    @ObservationIgnored private var isRelaunching = false
     var modelRevision = 0
 
     var selectedModel: SpeechModel { models.first { $0.id == settings.selectedModelID } ?? models[0] }
@@ -1403,7 +1407,17 @@ final class AppModel {
 
     func requestAccessibility() {
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        accessibilityGranted = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
+        _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
+        // ponytail: trust flips in Settings after this returns false; poll so the
+        // row flips to Allowed without requiring an app re-activate. refreshPermissions
+        // relaunches to adopt the grant if macOS cached the old answer for this process.
+        Task { @MainActor in
+            for _ in 0..<20 {
+                try? await Task.sleep(for: .milliseconds(500))
+                refreshPermissions()
+                if accessibilityGranted { break }
+            }
+        }
     }
 
     /// Turning the integration on asks for Calendar access; a denial turns it back off and opens Privacy settings.
@@ -1429,10 +1443,37 @@ final class AppModel {
         // which re-runs MenuBarExtra configuration -> saveSettings -> slow IPC.
         let mic = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
         if microphoneGranted != mic { microphoneGranted = mic }
-        let ax = AXIsProcessTrusted()
+        let ax = AppModel.liveAccessibilityTrust()
         if accessibilityGranted != ax {
             accessibilityGranted = ax
             if settings.shortcut.isModifierOnly, !isBusy { registerShortcut() }
+        }
+        // AXIsProcessTrusted() caches its answer for the whole process, so a grant
+        // made while DeepType was open leaves the AX APIs themselves stale. Pick it
+        // up with a relaunch rather than asking the user to quit and reopen.
+        if ax, accessibilityDeniedAtLaunch, !AXIsProcessTrusted(), !isBusy { relaunch() }
+    }
+
+    /// AXIsProcessTrusted() only reports what TCC said when the process started; an
+    /// active event tap is refused live, so it tells whether Accessibility is on now.
+    static func liveAccessibilityTrust() -> Bool {
+        guard let tap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
+            eventsOfInterest: 0,
+            callback: { _, _, event, _ in Unmanaged.passUnretained(event) },
+            userInfo: nil
+        ) else { return false }
+        CFMachPortInvalidate(tap)
+        return true
+    }
+
+    private func relaunch() {
+        guard !isRelaunching else { return }
+        isRelaunching = true
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
         }
     }
 

@@ -6,9 +6,9 @@ volume_name = "DeepType"
 format = "UDZO"
 compression_level = 9
 
-# ponytail: fixed 642x406 canvas shared with scripts/dmg-background.swift;
+# ponytail: fixed 640x420 canvas shared with scripts/dmg-background.swift;
 # icon slots in the background sit at these coordinates.
-window_rect = ((200, 140), (642, 406))
+window_rect = ((200, 140), (640, 420))
 icon_size = 128
 text_size = 13
 background = os.path.join(os.environ["DMG_STAGING"], ".background", "background.tiff")
@@ -23,6 +23,6 @@ symlinks = {
 }
 
 icon_locations = {
-    "DeepType.app": (164, 160),
-    "Applications": (478, 160),
+    "DeepType.app": (160, 170),
+    "Applications": (480, 170),
 }

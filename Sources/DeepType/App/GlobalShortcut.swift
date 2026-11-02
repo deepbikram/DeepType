@@ -31,7 +31,7 @@ final class GlobalShortcut {
         unregister()
         wantsShift = withShift
         if shortcut.isModifierOnly {
-            guard AXIsProcessTrusted() else { throw ShortcutError.accessibilityRequired }
+            guard AppModel.liveAccessibilityTrust() else { throw ShortcutError.accessibilityRequired }
             localMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
                 MainActor.assumeIsolated { self?.handleModifierEvent(event, shortcut: shortcut) }
                 return event

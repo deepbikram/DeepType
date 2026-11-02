@@ -99,12 +99,12 @@ for arch in arm64 x86_64; do
         <item>
             <title>Version $VERSION ($arch)</title>
             <pubDate>$(LC_ALL=C date -u '+%a, %d %b %Y %H:%M:%S +0000')</pubDate>
-            <link>https://github.com/opennookorg/deeptype/releases/tag/v$VERSION</link>
+            <link>https://github.com/deepbikram/DeepType/releases/tag/v$VERSION</link>
             <sparkle:version>$VERSION</sparkle:version>
             <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             $hardware_requirement
-            <enclosure url="https://github.com/opennookorg/deeptype/releases/download/v$VERSION/$(basename "$dmg_path")" type="application/octet-stream" $signature/>
+            <enclosure url="https://github.com/deepbikram/DeepType/releases/download/v$VERSION/$(basename "$dmg_path")" type="application/octet-stream" $signature/>
         </item>
 EOF
 done

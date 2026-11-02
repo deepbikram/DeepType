@@ -1,20 +1,23 @@
 import AppKit
 import SwiftUI
 
-let size = CGSize(width: 642, height: 406)
-let leftSlot = CGPoint(x: 164, y: 165)
-let rightSlot = CGPoint(x: 478, y: 165)
+let size = CGSize(width: 640, height: 420)
+let leftSlot = CGPoint(x: 160, y: 170)
+let rightSlot = CGPoint(x: 480, y: 170)
+let slotSize = CGSize(width: 190, height: 210)
 
 struct Arrow: Shape {
     func path(in rect: CGRect) -> Path {
-        let tip = CGPoint(x: 362, y: 150)
+        let y = rect.midY
+        let tipX = rect.maxX
+        let tailX = rect.minX
         return Path { path in
-            path.move(to: CGPoint(x: 280, y: 150))
-            path.addLine(to: CGPoint(x: tip.x - 10, y: tip.y))
-            path.move(to: tip)
-            path.addLine(to: CGPoint(x: tip.x - 14, y: tip.y - 11))
-            path.move(to: tip)
-            path.addLine(to: CGPoint(x: tip.x - 14, y: tip.y + 11))
+            path.move(to: CGPoint(x: tailX, y: y))
+            path.addLine(to: CGPoint(x: tipX - 12, y: y))
+            path.move(to: CGPoint(x: tipX, y: y))
+            path.addLine(to: CGPoint(x: tipX - 16, y: y - 12))
+            path.move(to: CGPoint(x: tipX, y: y))
+            path.addLine(to: CGPoint(x: tipX - 16, y: y + 12))
         }
     }
 }
@@ -39,20 +42,22 @@ struct Background: View {
             ForEach([leftSlot, rightSlot], id: \.x) { center in
                 RoundedRectangle(cornerRadius: 18)
                     .fill(.white.opacity(0.05))
-                    .frame(width: 200, height: 220)
+                    .frame(width: slotSize.width, height: slotSize.height)
                     .position(center)
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(.white.opacity(0.22), lineWidth: 2)
-                    .frame(width: 200, height: 220)
+                    .frame(width: slotSize.width, height: slotSize.height)
                     .position(center)
             }
             Arrow()
                 .stroke(.white.opacity(0.6), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-            Text("SIMPLY DRAG")
-                .font(.system(size: 13, weight: .semibold))
-                .tracking(3)
+                .frame(width: 100, height: 26)
+                .position(x: (leftSlot.x + rightSlot.x) / 2, y: leftSlot.y)
+            Text("Drag DeepType into Applications")
+                .font(.system(size: 12, weight: .medium))
+                .tracking(1)
                 .foregroundStyle(.white.opacity(0.55))
-                .position(x: 321, y: 190)
+                .position(x: size.width / 2, y: 330)
         }
         .frame(width: size.width, height: size.height)
         .environment(\.colorScheme, .dark)
