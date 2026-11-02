@@ -80,10 +80,7 @@ struct AboutView: View {
             }
 
             Section("Credits") {
-                LabeledContent("Created by", value: "Kartik Labhshetwar")
-                LabeledContent("Follow along") {
-                    Link("@code_kartik on X", destination: URL(string: "https://x.com/code_kartik")!)
-                }
+                LabeledContent("Created by", value: "Deep Bikram Thapa Chhetri")
             }
         }
         .formStyle(.grouped)

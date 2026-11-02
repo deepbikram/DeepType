@@ -79,14 +79,14 @@ sound packs have been removed.
 
 `scripts/release.sh` follows the separate-architecture signing and notarization
 workflow in the sibling DeepType project's `scripts/release.sh`
-(BSD-3-Clause, copyright 2026 Kartik Labhshetwar, the same author). DeepType
+(BSD-3-Clause, copyright 2026 Deep Bikram Thapa Chhetri, the same author). DeepType
 uses SwiftPM builds, verifies the executable architecture and publishes a
 Sparkle feed for both downloads instead of DeepType's Xcode build commands.
 
 `Sources/DeepType/App/ToastWindow.swift` adapts `ToastWindow` and its glass
 surface from DeepType (`Sources/Views/ToastWindow.swift` and
-`Sources/Views/GlassSurface.swift`), BSD-3-Clause, copyright 2026 Kartik
-Labhshetwar, the same author as DeepType. Changes take a typed `Toast`, ignore
+`Sources/Views/GlassSurface.swift`), BSD-3-Clause, copyright 2026 Deep
+Bikram Thapa Chhetri, the same author as DeepType. Changes take a typed `Toast`, ignore
 mouse events, announce the toast to VoiceOver and use an opaque surface before
 macOS 26.
 

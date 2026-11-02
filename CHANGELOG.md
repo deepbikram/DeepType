@@ -212,7 +212,7 @@ All notable changes to DeepType are listed here. The format follows
 - Toast confirmations for copy and delete, adapted from DeepType's toast panel.
 - Menu bar icon switches to a microphone while recording.
 - App icon and in-app logo: a hand-drawn "w" on a light tile, shown on a dark tile in Dark Mode. `scripts/build-app.sh` renders the icon from the same SwiftUI view.
-- Dedicated About page with the app logo, version, source code and issue links, and the author's X profile.
+- Dedicated About page with the app logo, version, source code and issue links.
 - In-app updates from GitHub Releases through Sparkle 2. Check from About or the app menu, and choose whether DeepType checks daily and installs new versions on its own. Updates install only when their EdDSA signature matches the app's public key.
 - Meeting notes. Start a meeting from the Meetings page or the menu bar to record your microphone as "Me" and other apps' audio as "Them" (macOS 14.2 or later), follow a live transcript, and write your own notes. When it ends, Apple Intelligence on a supported Mac running macOS 26 or later writes a summary, key points, decisions and action items locally. Without Apple Intelligence the transcript and your notes are still saved. Search saved meetings, mark action items complete and copy meeting notes and transcripts as Markdown. With a built-in speech provider, audio stays on the Mac; API providers require explicit selection.
 - Website with a typing and dictation demo, feature overview, comparison pages, download links, privacy and terms pages, and a dedicated changelog rendered from this file. Pages include static content and social previews.
