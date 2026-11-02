@@ -1,0 +1,12 @@
+.build/
+.swiftpm/
+.claude/worktrees/
+build/
+.DS_Store
+*.xcuserstate
+__pycache__/
+*.pyc
+.venv/
+.env
+!*.example
+release/
