@@ -21,6 +21,6 @@
     <key>NSAppTransportSecurity</key>
     <dict><key>NSAllowsLocalNetworking</key><true/></dict>
     <key>SUFeedURL</key><string>https://github.com/deepbikram/DeepType/releases/latest/download/appcast.xml</string>
-    <key>SUPublicEDKey</key><string>QAcU47kj1MAVrne6SZCZ9c8XhIE0pOP/v3dCIEn+wH0=</string>
+    <key>SUPublicEDKey</key><string>UytdMUhMmxHS5jIoGXPcNPyQzgbwlrPeJQ8dsTJhjpQ=</string>
 </dict>
 </plist>

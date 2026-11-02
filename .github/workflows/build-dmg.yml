@@ -44,18 +44,51 @@ jobs:
           bash scripts/create-dmg.sh "$BIN_DIR/DeepType.app" "$DMG"
           echo "DMG=$DMG" >> "$GITHUB_ENV"
 
+      - name: Generate appcast
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          SIGN_UPDATE="$(find .build/artifacts -path '*/Sparkle/bin/sign_update' | head -1)"
+          KEY_FILE="$(mktemp)"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY_FILE"
+          SIGNATURE="$("$SIGN_UPDATE" --ed-key-file "$KEY_FILE" "$DMG")"
+          rm -f "$KEY_FILE"
+          {
+            echo '<?xml version="1.0" encoding="utf-8"?>'
+            echo '<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">'
+            echo '    <channel>'
+            echo '        <title>DeepType</title>'
+            echo '        <item>'
+            echo "            <title>Version $VERSION (arm64)</title>"
+            echo "            <pubDate>$(LC_ALL=C date -u '+%a, %d %b %Y %H:%M:%S +0000')</pubDate>"
+            echo "            <link>https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME</link>"
+            echo "            <sparkle:version>$VERSION</sparkle:version>"
+            echo "            <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>"
+            echo "            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>"
+            echo "            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>"
+            echo "            <enclosure url=\"https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$DMG\" type=\"application/octet-stream\" $SIGNATURE/>"
+            echo '        </item>'
+            echo '    </channel>'
+            echo '</rss>'
+          } > appcast.xml
+          echo "APPCAST=appcast.xml" >> "$GITHUB_ENV"
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: DeepType-macOS-arm64
-          path: DeepType-*.dmg
+          path: |
+            DeepType-*.dmg
+            appcast.xml
 
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          gh release create "$GITHUB_REF_NAME" "$DMG" \
+          gh release create "$GITHUB_REF_NAME" "$DMG" "$APPCAST" \
             --title "DeepType $GITHUB_REF_NAME" \
             --notes "Unsigned build (no notarization): on first launch, right-click DeepType.app > Open, or System Settings > Privacy & Security > Open Anyway." \
-            --latest=false || gh release upload "$GITHUB_REF_NAME" "$DMG" --clobber
+            --latest || gh release upload "$GITHUB_REF_NAME" "$DMG" "$APPCAST" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
