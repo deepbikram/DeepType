@@ -233,3 +233,47 @@ import Testing
     try cancel.register(shiftF18)
     #expect(throws: ShortcutError.self) { try cancel.register(f18) }
 }
+
+@Test @MainActor func extraShortcutsCanBeAddedAndRemovedWithoutTakingTheMainOne() throws {
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let model = AppModel(store: LocalStore(directory: folder), startsServices: false)
+    let f18 = try #require(DictationShortcut(keyCode: UInt32(kVK_F18), modifiers: [], key: "F18"))
+    let f19 = try #require(DictationShortcut(keyCode: UInt32(kVK_F19), modifiers: [], key: "F19"))
+    defer { model.suspendShortcut() }
+
+    model.changeExtraShortcut(at: 0, to: f18)
+    #expect(model.settings.extraShortcuts == [f18])
+    #expect(AppModel(store: LocalStore(directory: folder), startsServices: false).settings.extraShortcuts == [f18])
+
+    model.changeShortcut(f18)
+    #expect(model.settings.shortcut == .optionSpace)
+
+    model.changeExtraShortcut(at: 1, to: f19)
+    #expect(model.settings.extraShortcuts == [f18, f19])
+    model.changeExtraShortcut(at: 0, to: nil)
+    #expect(model.settings.extraShortcuts == [f19])
+}
+
+@Test @MainActor func escapeIsTheDefaultCancelAndMoreCancelShortcutsCanBeAdded() throws {
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let model = AppModel(store: LocalStore(directory: folder), startsServices: false)
+    let f17 = try #require(DictationShortcut(keyCode: UInt32(kVK_F17), modifiers: [], key: "F17"))
+    defer { model.suspendShortcut() }
+
+    model.changeCancelShortcut(.escape)
+    #expect(model.settings.cancelShortcut == nil)
+
+    model.changeExtraCancelShortcut(at: 0, to: f17)
+    #expect(model.settings.extraCancelShortcuts == [f17])
+    #expect(AppModel(store: LocalStore(directory: folder), startsServices: false).settings.extraCancelShortcuts == [f17])
+
+    model.changeCancelShortcut(f17)
+    #expect(model.settings.cancelShortcut == nil)
+
+    model.changeExtraCancelShortcut(at: 0, to: nil)
+    #expect(model.settings.extraCancelShortcuts.isEmpty)
+}

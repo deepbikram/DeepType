@@ -1,7 +1,12 @@
 import Foundation
 
 public enum DictationMode: String, Codable, CaseIterable, Sendable {
-    case hold, toggle
+    /// Hold to talk; a quick tap still starts a hands-free dictation.
+    case hold
+    /// Press starts and press again finishes.
+    case toggle
+    /// Release starts a hands-free dictation; pressing and releasing again finishes.
+    case tap
 }
 
 public enum AppTheme: String, Codable, CaseIterable, Sendable {
@@ -74,8 +79,12 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var dictationMode: DictationMode = .hold
     public var unloadModelWhenIdle: ModelIdleUnload = .never
     public var shortcut: DictationShortcut = .optionSpace
-    /// Optional extra shortcut that cancels a dictation without pasting it; Escape always cancels.
+    /// Extra shortcuts that start dictation too; `shortcut` stays the one Reset and Shift use.
+    public var extraShortcuts: [DictationShortcut] = []
+    /// Optional extra shortcut that cancels a dictation without pasting it; nil and Escape always cancel.
     public var cancelShortcut: DictationShortcut?
+    /// More shortcuts that cancel a dictation; `cancelShortcut` and Escape stay the main ones.
+    public var extraCancelShortcuts: [DictationShortcut] = []
     public var selectedTextShortcut: DictationShortcut?
     public var learnCorrections: Bool = true
     public var cleanup: CleanupLevel = .light
@@ -202,7 +211,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
         dictationMode = try container.decodeIfPresent(DictationMode.self, forKey: .dictationMode) ?? .hold
         unloadModelWhenIdle = try container.decodeIfPresent(ModelIdleUnload.self, forKey: .unloadModelWhenIdle) ?? .never
         shortcut = try container.decodeIfPresent(DictationShortcut.self, forKey: .shortcut) ?? .optionSpace
+        extraShortcuts = try container.decodeIfPresent([DictationShortcut].self, forKey: .extraShortcuts) ?? []
         cancelShortcut = try container.decodeIfPresent(DictationShortcut.self, forKey: .cancelShortcut)
+        extraCancelShortcuts = try container.decodeIfPresent([DictationShortcut].self, forKey: .extraCancelShortcuts) ?? []
         selectedTextShortcut = try container.decodeIfPresent(DictationShortcut.self, forKey: .selectedTextShortcut)
         microphone = try container.decodeIfPresent(AudioInputDevice.self, forKey: .microphone)
         dismissedSpeakerDetectionOffer = try container.decodeIfPresent(Bool.self, forKey: .dismissedSpeakerDetectionOffer) ?? false

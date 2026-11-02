@@ -36,17 +36,28 @@ struct SettingsView: View {
 
                 SettingsSection("Shortcut") {
                     ShortcutRecorder(model: model, kind: .dictation)
+                    ForEach(Array(model.settings.extraShortcuts.enumerated()), id: \.offset) { index, _ in
+                        RowDivider()
+                        ShortcutRecorder(model: model, kind: .extra(index))
+                    }
+                    RowDivider()
+                    ShortcutRecorder(model: model, kind: .extra(model.settings.extraShortcuts.count))
                     RowDivider()
                     ShortcutRecorder(model: model, kind: .cancel)
+                    ForEach(Array(model.settings.extraCancelShortcuts.enumerated()), id: \.offset) { index, _ in
+                        RowDivider()
+                        ShortcutRecorder(model: model, kind: .extraCancel(index))
+                    }
+                    RowDivider()
+                    ShortcutRecorder(model: model, kind: .extraCancel(model.settings.extraCancelShortcuts.count))
                     RowDivider()
                     ShortcutRecorder(model: model, kind: .selectedText)
                     RowDivider()
-                    SettingRow("Behavior", caption: model.settings.dictationMode == .hold
-                        ? "Hold to speak and release to finish. Or tap once to dictate hands-free, then press again or click ✓ to finish."
-                        : "Press once to speak. Press again or click ✓ to finish.") {
+                    SettingRow("Behavior", caption: behaviorCaption) {
                         Picker("Behavior", selection: setting(\.dictationMode)) {
                             Text("Hold or tap").tag(DictationMode.hold)
                             Text("Press to toggle").tag(DictationMode.toggle)
+                            Text("Press and release").tag(DictationMode.tap)
                         }
                         .pickerStyle(.segmented)
                         .labelsHidden()
@@ -167,15 +178,7 @@ struct SettingsView: View {
                 SettingsSection("App") {
                     SettingToggle("Show in Dock", caption: "When off, use the menu bar to open DeepType. Your dictation shortcut still works.", isOn: setting(\.showInDock))
                     RowDivider()
-                    // ponytail: keep at least one of Dock / menu bar visible so the app stays reachable.
-                    SettingToggle("Show in menu bar", caption: "When off, use the Dock to open DeepType. Your dictation shortcut still works.", isOn: Binding(
-                        get: { model.settings.showMenuBarIcon },
-                        set: {
-                            model.settings.showMenuBarIcon = $0
-                            if !$0, !model.settings.showInDock { model.settings.showInDock = true }
-                            model.saveSettings()
-                        }
-                    ))
+                    SettingToggle("Show in menu bar", caption: "When off, use the Dock to open DeepType. Your dictation shortcut still works.", isOn: setting(\.showMenuBarIcon))
                     RowDivider()
                     SettingToggle("Dictation sounds", caption: "Soft cues when dictation starts listening, finishes, cancels or needs attention. Quiet during meeting capture.", isOn: setting(\.soundEffects))
                     if model.settings.soundEffects {
@@ -359,6 +362,14 @@ struct SettingsView: View {
         terminals = found
     }
 
+    private var behaviorCaption: String {
+        switch model.settings.dictationMode {
+        case .hold: "Hold to speak and release to finish. Or tap once to dictate hands-free, then press again or click ✓ to finish."
+        case .toggle: "Press once to speak. Press again or click ✓ to finish."
+        case .tap: "Press and release to dictate hands-free, then press and release again or click ✓ to finish."
+        }
+    }
+
     private var pauseMediaWhileDictating: Binding<Bool> {
         Binding(get: { model.settings.pauseMediaWhileDictating }, set: { isOn in
             model.settings.pauseMediaWhileDictating = isOn
@@ -393,7 +404,10 @@ struct SettingsView: View {
 }
 
 private struct ShortcutRecorder: View {
-    enum Kind { case dictation, cancel, selectedText }
+    enum Kind: Equatable {
+        case dictation, extra(Int), cancel, extraCancel(Int), selectedText
+        var isExtra: Bool { if case .extra = self { true } else { false } }
+    }
 
     let model: AppModel
     let kind: Kind
@@ -406,18 +420,39 @@ private struct ShortcutRecorder: View {
     private var shortcut: DictationShortcut? {
         switch kind {
         case .dictation: model.settings.shortcut
-        case .cancel: model.settings.cancelShortcut
+        case .extra(let index): model.settings.extraShortcuts.indices.contains(index) ? model.settings.extraShortcuts[index] : nil
+        case .cancel: model.settings.cancelShortcut ?? .escape
+        case .extraCancel(let index): model.settings.extraCancelShortcuts.indices.contains(index) ? model.settings.extraCancelShortcuts[index] : nil
         case .selectedText: model.settings.selectedTextShortcut
         }
     }
     private var title: String {
         switch kind {
-        case .dictation: "Keyboard shortcut"
-        case .cancel: "Cancel shortcut"
-        case .selectedText: "Clean up selected text"
+        case .dictation: return "Keyboard shortcut"
+        case .extra(let index): return index < model.settings.extraShortcuts.count ? "Also start dictation" : "Add another shortcut"
+        case .cancel: return "Cancel shortcut"
+        case .extraCancel(let index): return index < model.settings.extraCancelShortcuts.count ? "Also cancel dictation" : "Add another cancel shortcut"
+        case .selectedText: return "Clean up selected text"
         }
     }
-    private var placeholder: String { kind == .dictation ? "" : "Set Shortcut…" }
+    private var placeholder: String {
+        switch kind {
+        case .dictation: ""
+        case .extra(let index): index < model.settings.extraShortcuts.count ? "Set Shortcut…" : "Add Shortcut…"
+        case .extraCancel(let index): index < model.settings.extraCancelShortcuts.count ? "Set Shortcut…" : "Add Shortcut…"
+        case .cancel, .selectedText: "Set Shortcut…"
+        }
+    }
+
+    private var canClear: Bool {
+        switch kind {
+        case .dictation: false
+        case .extra(let index): model.settings.extraShortcuts.indices.contains(index)
+        case .extraCancel(let index): model.settings.extraCancelShortcuts.indices.contains(index)
+        case .cancel: model.settings.cancelShortcut != nil
+        case .selectedText: model.settings.selectedTextShortcut != nil
+        }
+    }
 
     var body: some View {
         SettingRow(title, caption: caption) {
@@ -432,17 +467,17 @@ private struct ShortcutRecorder: View {
                     .foregroundStyle(.secondary)
                     .help("Reset to \(DictationShortcut.optionSpace.displayName)")
                     .transition(.opacity)
-                } else if kind != .dictation, shortcut != nil, !isCapturing {
+                } else if canClear, !isCapturing {
                     Button("Clear", systemImage: "xmark.circle") { change(nil) }
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
-                    .help(kind == .cancel ? "Remove the cancel shortcut" : "Remove the clean up shortcut")
+                    .help(clearHelp)
                     .transition(.opacity)
                 }
                 recordButton
                     .accessibilityLabel(isCapturing ? "\(title), waiting for keys" : "\(title), \(shortcut?.spokenName ?? "not set")")
-                    .accessibilityHint(kind == .dictation ? "Click, then press a shortcut, or press and release a modifier key such as Option."
+                    .accessibilityHint(kind == .dictation || kind.isExtra ? "Click, then press a shortcut, or press and release a modifier key such as Option."
                                                           : "Click, then press a shortcut that includes a key, such as Control Option K.")
             }
             .disabled(model.isBusy)
@@ -453,16 +488,34 @@ private struct ShortcutRecorder: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in stop() }
     }
 
+    private var clearHelp: String {
+        switch kind {
+        case .extra, .extraCancel: "Remove this shortcut"
+        case .cancel: "Reset the cancel shortcut to Esc"
+        case .selectedText: "Remove the clean up shortcut"
+        case .dictation: ""
+        }
+    }
+
     private var caption: String? {
         if isCapturing {
-            return feedback ?? (kind == .dictation ? "Press and release ⌃, ⌥, ⇧, ⌘ or Fn alone, use a key combination, or press an F-key. Esc cancels."
+            return feedback ?? (kind == .dictation || kind.isExtra ? "Press and release ⌃, ⌥, ⇧, ⌘ or Fn alone, use a key combination, or press an F-key. Esc cancels."
                                                    : "Hold ⌃, ⌥ or ⌘ and press a key, or press an F-key. Esc leaves it as is.")
         }
         switch kind {
         case .dictation:
             if shortcut?.keyCode == UInt32(kVK_Function) { return "Needs Accessibility. Set “Press 🌐 key to” to “Do Nothing” in Keyboard settings." }
             return shortcut?.isModifierOnly == true ? "Needs Accessibility. Uses the left or right key you recorded." : "Starts dictation from any app."
-        case .cancel: return "Also cancels a dictation from any app. Esc always does."
+        case .extra(let index) where index < model.settings.extraShortcuts.count:
+            return "Also starts dictation from any app."
+        case .extra:
+            return "Add a second key or combination that starts dictation too."
+        case .cancel:
+            return model.settings.cancelShortcut == nil ? "Cancels a dictation from any app." : "Also cancels a dictation from any app. Esc always does."
+        case .extraCancel(let index) where index < model.settings.extraCancelShortcuts.count:
+            return "Also cancels a dictation from any app. Esc always does."
+        case .extraCancel:
+            return "Add another key that cancels a dictation. Esc always does."
         case .selectedText: return "Edits the text you select in any app with your cleanup provider from Style. English only."
         }
     }
@@ -500,7 +553,9 @@ private struct ShortcutRecorder: View {
     private func change(_ shortcut: DictationShortcut?) {
         switch kind {
         case .dictation: if let shortcut { model.changeShortcut(shortcut) }
+        case .extra(let index): model.changeExtraShortcut(at: index, to: shortcut)
         case .cancel: model.changeCancelShortcut(shortcut)
+        case .extraCancel(let index): model.changeExtraCancelShortcut(at: index, to: shortcut)
         case .selectedText: model.changeSelectedTextShortcut(shortcut)
         }
     }

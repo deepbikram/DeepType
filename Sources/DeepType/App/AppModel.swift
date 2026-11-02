@@ -166,8 +166,10 @@ final class AppModel {
     @ObservationIgnored private let startsServices: Bool
     @ObservationIgnored private let correctionWatcher = CorrectionWatcher()
     @ObservationIgnored private let globalShortcut = GlobalShortcut()
+    @ObservationIgnored private var extraShortcuts: [GlobalShortcut] = []
     @ObservationIgnored private let cancelShortcut = GlobalShortcut(id: 2)
     @ObservationIgnored private let customCancelShortcut = GlobalShortcut(id: 3)
+    @ObservationIgnored private var extraCancelShortcuts: [GlobalShortcut] = []
     @ObservationIgnored private let selectedTextShortcut = GlobalShortcut(id: 4)
     @ObservationIgnored private var selectedTextCleanup: Task<Void, Never>?
     @ObservationIgnored private var microphoneObserver: AudioInputObserver?
@@ -279,14 +281,25 @@ final class AppModel {
 
     func shortcutPressed() {
         guard shortcutPressedAt == nil || !isBusy else { return }
-        guard settings.dictationMode == .hold, !isBusy else { toggleRecording(); return }
-        shortcutPressedAt = Date()
-        startRecording(held: true)
+        switch settings.dictationMode {
+        case .hold:
+            guard !isBusy else { toggleRecording(); return }
+            shortcutPressedAt = Date()
+            startRecording(held: true)
+        case .toggle:
+            toggleRecording()
+        case .tap:
+            shortcutPressedAt = Date()
+        }
     }
 
     func shortcutReleased() {
         guard let pressedAt = shortcutPressedAt else { return }
         shortcutPressedAt = nil
+        if settings.dictationMode == .tap {
+            toggleRecording()
+            return
+        }
         guard phase == .preparing || phase == .recording else { return }
         if Date().timeIntervalSince(pressedAt) < 0.3 {
             isHeldSession = false
@@ -300,6 +313,7 @@ final class AppModel {
         if let shortcut = settings.selectedTextShortcut { try? selectedTextShortcut.register(shortcut) }
         do {
             try globalShortcut.register(settings.shortcut, withShift: wantsShiftShortcut(for: settings.shortcut))
+            try registerExtraShortcuts(settings.extraShortcuts)
             if statusMessage == shortcutWarning { statusMessage = "" }
         } catch {
             statusMessage = "\(error.localizedDescription) Use the menu bar or Record button to dictate, or choose another shortcut in Settings."
@@ -307,24 +321,87 @@ final class AppModel {
         }
     }
 
+    private func registerExtraShortcuts(_ shortcuts: [DictationShortcut]) throws {
+        extraShortcuts.forEach { $0.unregister() }
+        extraShortcuts = []
+        var registered: [GlobalShortcut] = []
+        for (index, shortcut) in shortcuts.enumerated() {
+            let listener = GlobalShortcut(id: UInt32(20 + index))
+            listener.onPress = { [weak self] in self?.shortcutPressed() }
+            listener.onRelease = { [weak self] in self?.shortcutReleased() }
+            do {
+                try listener.register(shortcut)
+            } catch {
+                registered.forEach { $0.unregister() }
+                throw error
+            }
+            registered.append(listener)
+        }
+        extraShortcuts = registered
+    }
+
+    /// Adds, replaces or (with nil) removes an extra dictation shortcut at `index`; `index == count` appends.
+    func changeExtraShortcut(at index: Int, to shortcut: DictationShortcut?) {
+        guard !isBusy else { return }
+        var updated = settings.extraShortcuts
+        if let shortcut {
+            guard shortcut != settings.shortcut, shortcut != settings.cancelShortcut,
+                  shortcut != settings.selectedTextShortcut, !settings.extraCancelShortcuts.contains(shortcut),
+                  !updated.contains(shortcut) else {                ToastWindow.shared.show(Toast(failure: "Couldn’t use \(shortcut.displayName)", ShortcutError.alreadyAssigned(shortcut)))
+                return
+            }
+            if index < updated.count { updated[index] = shortcut }
+            else if index == updated.count { updated.append(shortcut) }
+            else { return }
+        } else {
+            guard updated.indices.contains(index) else { return }
+            updated.remove(at: index)
+        }
+        do {
+            try registerExtraShortcuts(updated)
+        } catch {
+            try? registerExtraShortcuts(settings.extraShortcuts)
+            ToastWindow.shared.show(Toast(failure: "Couldn’t use \(shortcut?.displayName ?? "that shortcut")", error))
+            return
+        }
+        settings.extraShortcuts = updated
+        saveSettings()
+    }
+
     func suspendShortcut() {
         globalShortcut.unregister()
+        extraShortcuts.forEach { $0.unregister() }
         selectedTextShortcut.unregister()
     }
 
     private func armCancelShortcut(_ busy: Bool) {
         if busy {
-            cancelShortcut.register(keyCode: UInt32(kVK_Escape), modifiers: settings.shortcut.cancelModifiers)
+            let modifiers = ([settings.shortcut] + settings.extraShortcuts).flatMap(\.cancelModifiers)
+            cancelShortcut.register(keyCode: UInt32(kVK_Escape), modifiers: Array(Set(modifiers)))
             if let custom = settings.cancelShortcut { try? customCancelShortcut.register(custom) }
+            armExtraCancelShortcuts(settings.extraCancelShortcuts)
         } else {
             cancelShortcut.unregister()
             customCancelShortcut.unregister()
+            extraCancelShortcuts.forEach { $0.unregister() }
+        }
+    }
+
+    private func armExtraCancelShortcuts(_ shortcuts: [DictationShortcut]) {
+        extraCancelShortcuts.forEach { $0.unregister() }
+        extraCancelShortcuts = []
+        for (index, shortcut) in shortcuts.enumerated() {
+            let listener = GlobalShortcut(id: UInt32(40 + index))
+            listener.onPress = { [weak self] in self?.cancelOrHoldBack() }
+            guard (try? listener.register(shortcut)) != nil else { continue }
+            extraCancelShortcuts.append(listener)
         }
     }
 
     func changeShortcut(_ shortcut: DictationShortcut) {
         guard !isBusy else { return }
-        if shortcut == settings.cancelShortcut || shortcut == settings.selectedTextShortcut {
+        if shortcut == settings.cancelShortcut || shortcut == settings.selectedTextShortcut
+            || settings.extraShortcuts.contains(shortcut) || settings.extraCancelShortcuts.contains(shortcut) {
             registerShortcut()
             ToastWindow.shared.show(Toast(failure: "Couldn’t use \(shortcut.displayName)", ShortcutError.alreadyAssigned(shortcut)))
             return
@@ -343,10 +420,14 @@ final class AppModel {
 
     func changeCancelShortcut(_ shortcut: DictationShortcut?) {
         guard !isBusy else { return }
+        // Esc is the default, so storing it again would do nothing.
+        let shortcut = shortcut == .escape ? nil : shortcut
         if let shortcut {
             do {
                 if shortcut.isModifierOnly { throw ShortcutError.needsKey }
-                if shortcut == settings.shortcut || shortcut == settings.selectedTextShortcut { throw ShortcutError.alreadyAssigned(shortcut) }
+                if shortcut == settings.shortcut || shortcut == settings.selectedTextShortcut
+                    || settings.extraShortcuts.contains(shortcut)
+                    || settings.extraCancelShortcuts.contains(shortcut) { throw ShortcutError.alreadyAssigned(shortcut) }
                 try customCancelShortcut.register(shortcut)
                 customCancelShortcut.unregister()
             } catch {
@@ -355,6 +436,40 @@ final class AppModel {
             }
         }
         settings.cancelShortcut = shortcut
+        saveSettings()
+    }
+
+    /// Adds, replaces or (with nil) removes an extra cancel shortcut at `index`; `index == count` appends.
+    func changeExtraCancelShortcut(at index: Int, to shortcut: DictationShortcut?) {
+        guard !isBusy else { return }
+        var updated = settings.extraCancelShortcuts
+        if let shortcut {
+            guard shortcut != .escape, !shortcut.isModifierOnly else {
+                ToastWindow.shared.show(Toast(failure: "Couldn’t use \(shortcut.displayName)", ShortcutError.needsKey))
+                return
+            }
+            guard shortcut != settings.shortcut, shortcut != settings.cancelShortcut,
+                  shortcut != settings.selectedTextShortcut, !settings.extraShortcuts.contains(shortcut),
+                  !updated.contains(shortcut) else {
+                ToastWindow.shared.show(Toast(failure: "Couldn’t use \(shortcut.displayName)", ShortcutError.alreadyAssigned(shortcut)))
+                return
+            }
+            let probe = GlobalShortcut(id: UInt32(40 + index))
+            do {
+                try probe.register(shortcut)
+                probe.unregister()
+            } catch {
+                ToastWindow.shared.show(Toast(failure: "Couldn’t use \(shortcut.displayName)", error))
+                return
+            }
+            if index < updated.count { updated[index] = shortcut }
+            else if index == updated.count { updated.append(shortcut) }
+            else { return }
+        } else {
+            guard updated.indices.contains(index) else { return }
+            updated.remove(at: index)
+        }
+        settings.extraCancelShortcuts = updated
         saveSettings()
     }
 
@@ -436,7 +551,9 @@ final class AppModel {
             do {
                 if shortcut.isModifierOnly { throw ShortcutError.needsKey }
                 if shortcut.keyCode == UInt32(kVK_Escape) { throw ShortcutError.cancelsDictation }
-                if shortcut == settings.shortcut || shortcut == settings.cancelShortcut { throw ShortcutError.alreadyAssigned(shortcut) }
+                if shortcut == settings.shortcut || shortcut == settings.cancelShortcut
+                    || settings.extraShortcuts.contains(shortcut)
+                    || settings.extraCancelShortcuts.contains(shortcut) { throw ShortcutError.alreadyAssigned(shortcut) }
                 try selectedTextShortcut.register(shortcut)
             } catch {
                 registerShortcut()
@@ -1312,7 +1429,8 @@ final class AppModel {
 
     private func wantsShiftShortcut(for shortcut: DictationShortcut) -> Bool {
         guard settings.sendToClaude, !shortcut.isModifierOnly, !shortcut.usesShift else { return false }
-        return ![settings.cancelShortcut, settings.selectedTextShortcut].compactMap { $0 }.contains {
+        let taken = [settings.cancelShortcut, settings.selectedTextShortcut].compactMap { $0 } + settings.extraCancelShortcuts
+        return !taken.contains {
             $0.keyCode == shortcut.keyCode && $0.modifiers == shortcut.modifiers.union(.shift)
         }
     }
@@ -1324,8 +1442,6 @@ final class AppModel {
     }
 
     func saveSettings() {
-        // ponytail: keep one visible entry point so hiding both can't lock the user out.
-        if !settings.showInDock, !settings.showMenuBarIcon { settings.showMenuBarIcon = true }
     if !settings.sendToClaude { holdBackReturn() }
     // ponytail: setActivationPolicy deadlocks when called re-entrantly from a
     // MenuBarExtra KVO update (main thread wedged in a LaunchServices XPC
@@ -1446,12 +1562,15 @@ final class AppModel {
         let ax = AppModel.liveAccessibilityTrust()
         if accessibilityGranted != ax {
             accessibilityGranted = ax
-            if settings.shortcut.isModifierOnly, !isBusy { registerShortcut() }
+            if (settings.shortcut.isModifierOnly || settings.extraShortcuts.contains(where: \.isModifierOnly)), !isBusy { registerShortcut() }
         }
         // AXIsProcessTrusted() caches its answer for the whole process, so a grant
         // made while DeepType was open leaves the AX APIs themselves stale. Pick it
         // up with a relaunch rather than asking the user to quit and reopen.
-        if ax, accessibilityDeniedAtLaunch, !AXIsProcessTrusted(), !isBusy { relaunch() }
+        if ax, accessibilityDeniedAtLaunch, !AXIsProcessTrusted(), !isBusy {
+            Logger(subsystem: "org.deeptype.app", category: "Permissions").notice("Accessibility granted while running; relaunching to adopt it")
+            relaunch()
+        }
     }
 
     /// AXIsProcessTrusted() only reports what TCC said when the process started; an

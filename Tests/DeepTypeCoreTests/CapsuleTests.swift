@@ -381,3 +381,16 @@ func pendingSendStaysCancellableThroughTheFinalPromptCheck(delay: Duration) asyn
     // Keep the cleanup task from reading the user's actual selection in this test.
     model.phase = .preparing
 }
+
+@Test @MainActor func pressAndReleaseStartsHandsFreeOnReleaseInsteadOfOnPress() {
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let model = AppModel(store: LocalStore(directory: folder), startsServices: false)
+    model.settings.soundEffects = false
+    model.settings.dictationMode = .tap
+    defer { model.discardRecording() }
+
+    model.shortcutPressed()
+    #expect(model.phase == .idle)
+    model.shortcutReleased()
+    #expect(model.phase == .preparing && !model.isHeldSession)
+}

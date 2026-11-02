@@ -179,6 +179,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
+    // ponytail: with both Dock and menu bar off, reopening the app from Finder,
+    // Spotlight or Launchpad is the only way back to the dashboard.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !flag else { return true }
+        model.onShowDashboard?()
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        NSApp.windows.first(where: { $0.canBecomeMain })?.makeKeyAndOrderFront(nil)
+        return true
+    }
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         model.discardRecording()
         guard let pending = model.mediaPauser.pending else { return .terminateNow }
