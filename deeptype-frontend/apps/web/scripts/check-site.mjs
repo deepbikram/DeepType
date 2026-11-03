@@ -64,7 +64,7 @@ try {
     );
     for (const arch of ["arm64", "x86_64"]) {
       assert.ok(
-        html.includes(`href="https://github.com/opennookorg/deeptype/releases/latest/download/DeepType-${arch}.dmg"`),
+        html.includes(`href="https://github.com/deepbikram/DeepType/releases/latest/download/DeepType-${arch}.dmg"`),
         `${path}: ${arch} download available`,
       );
     }
@@ -186,8 +186,8 @@ try {
   assert.deepEqual(
     [...hero.matchAll(/<a\b[^>]*href="([^"]+)"/g)].map((match) => match[1]),
     [
-      "https://github.com/opennookorg/deeptype/releases/latest/download/DeepType-arm64.dmg",
-      "https://github.com/opennookorg/deeptype/releases/latest/download/DeepType-x86_64.dmg",
+      "https://github.com/deepbikram/DeepType/releases/latest/download/DeepType-arm64.dmg",
+      "https://github.com/deepbikram/DeepType/releases/latest/download/DeepType-x86_64.dmg",
       "#how-it-works",
     ],
     "The hero offers both downloads and a link to how it works",

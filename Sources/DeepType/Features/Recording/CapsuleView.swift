@@ -28,22 +28,38 @@ struct CapsuleView: View {
         if model.phase != .idle { 24 } else if failure == nil, meetingPrompt != nil { 26 } else if showsCard { 22 } else { 18 }
     }
     private var showsToolbar: Bool { !showsCard && !model.isBusy && !isMeetingCapturing && hover.isHovering }
+    /// Top placement hangs content from the panel's top edge so the pill sits
+    /// against the menu bar instead of 240pt below it.
+    private var alignsToTop: Bool { model.settings.capsulePosition == .topCenter }
     private var spring: Animation? { reduceMotion ? nil : .spring(duration: 0.26, bounce: 0) }
     private var swap: AnyTransition { reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92, anchor: .bottom)) }
 
     var body: some View {
         VStack(spacing: 6) {
-            Spacer(minLength: 0)
-            if !showsCard, let target = hover.target {
-                tooltip(for: target)
+            if alignsToTop {
+                surface
+                if model.isBusy, !model.liveTranscript.isEmpty {
+                    livePreview
+                }
+                RecordingLimitLabel(model: model)
+                if !showsCard, let target = hover.target {
+                    tooltip(for: target)
+                }
+                Spacer(minLength: 0)
+            } else {
+                Spacer(minLength: 0)
+                if !showsCard, let target = hover.target {
+                    tooltip(for: target)
+                }
+                RecordingLimitLabel(model: model)
+                if model.isBusy, !model.liveTranscript.isEmpty {
+                    livePreview
+                }
+                surface
             }
-            RecordingLimitLabel(model: model)
-            if model.isBusy, !model.liveTranscript.isEmpty {
-                livePreview
-            }
-            surface
         }
-        .padding(.bottom, 16)
+        .padding(.top, alignsToTop ? 16 : 0)
+        .padding(.bottom, alignsToTop ? 0 : 16)
         .frame(width: 440, height: 240)
         .coordinateSpace(name: "capsule")
         .onPreferenceChange(CapsuleRegions.self) { hover.update(regions: $0) }
