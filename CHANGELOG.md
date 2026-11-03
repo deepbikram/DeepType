@@ -4,6 +4,13 @@ All notable changes to DeepType are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/). The current version lives in `VERSION`.
 
+## [0.1.12] - 2026-11-03
+
+### Added
+- Microphone key support in Settings: maps the keyboard dictation key to F5 and uses it as the dictation shortcut. The mapping is reapplied at launch and can be turned off to give the key back to macOS.
+- Recording capsule placement: bottom of the screen, top of the screen, or near the pointer, with optional cancel (✕) and finish (✓) buttons.
+- Quit DeepType in Settings > App, which closes the app completely instead of leaving it running in the menu bar.
+
 ## [0.1.10] - 2026-11-02
 
 ### Added
