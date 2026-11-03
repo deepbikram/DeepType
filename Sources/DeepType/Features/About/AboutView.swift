@@ -6,7 +6,6 @@ struct AboutView: View {
     let shortcut: DictationShortcut
     static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development"
     static let changelog = URL(string: "https://deeptype.com/changelog")!
-    private let repository = URL(string: "https://github.com/deepbikram/DeepType")!
 
     var body: some View {
         Form {
@@ -30,7 +29,7 @@ struct AboutView: View {
             Section {
                 Toggle(isOn: $updater.automaticallyChecksForUpdates) {
                     Text("Check for updates automatically")
-                    Text("Looks for a new release on GitHub once a day.")
+                    Text("Looks for a new release once a day.")
                 }
                 Toggle(isOn: $updater.automaticallyDownloadsUpdates) {
                     Text("Download and install automatically")
@@ -43,23 +42,11 @@ struct AboutView: View {
             } header: {
                 Text("Updates")
             } footer: {
-                Text("Update checks contact GitHub only. They never include your audio or text.")
+                Text("Update checks never include your audio or text.")
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                LabeledContent {
-                    Link("View on GitHub", destination: repository)
-                } label: {
-                    Text("Source code")
-                    Text("Browse the code and every release.")
-                }
-                LabeledContent {
-                    Link("Open an Issue", destination: repository.appending(path: "issues"))
-                } label: {
-                    Text("Feedback")
-                    Text("Report a bug or suggest a feature.")
-                }
                 LabeledContent {
                     Link("What’s New", destination: Self.changelog)
                 } label: {
@@ -73,9 +60,9 @@ struct AboutView: View {
                     Text("Help fund DeepType’s development.")
                 }
             } header: {
-                Text("Open Source")
+                Text("About")
             } footer: {
-                Text("DeepType is free and open source under the Apache 2.0 license. If it saves you some typing, a star on GitHub helps others find it.")
+                Text("DeepType is free. If it saves you some typing, tell a friend.")
                     .foregroundStyle(.secondary)
             }
 

@@ -113,6 +113,7 @@ final class CapsuleController {
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(reposition),
             name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
         observeMeetings()
+        observeSettings()
     }
 
     func update() {
@@ -132,6 +133,19 @@ final class CapsuleController {
         }
     }
 
+    private func observeSettings() {
+        withObservationTracking {
+            _ = model.settings.capsulePosition
+            _ = model.settings.showCapsule
+            _ = model.settings.hideCapsuleWhileDictating
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.update()
+                self?.observeSettings()
+            }
+        }
+    }
+
     func show() {
         reposition()
         panel.orderFrontRegardless()
@@ -141,7 +155,17 @@ final class CapsuleController {
         let pointer = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { NSMouseInRect(pointer, $0.frame, false) }) ?? NSScreen.main else { return }
         let frame = screen.visibleFrame
-        panel.setFrameOrigin(NSPoint(x: frame.midX - 220, y: frame.minY + 12))
+        let size = panel.frame.size
+        switch model.settings.capsulePosition {
+        case .bottomCenter:
+            panel.setFrameOrigin(NSPoint(x: frame.midX - size.width / 2, y: frame.minY + 12))
+        case .topCenter:
+            panel.setFrameOrigin(NSPoint(x: frame.midX - size.width / 2, y: frame.maxY - size.height - 12))
+        case .nearCursor:
+            panel.setFrameOrigin(NSPoint(
+                x: min(max(pointer.x + 16, frame.minX), frame.maxX - size.width),
+                y: min(max(pointer.y - size.height - 16, frame.minY), frame.maxY - size.height)))
+        }
     }
 
     func close() {

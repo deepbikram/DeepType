@@ -54,6 +54,7 @@ private struct TranscribeHome: View {
     @State private var importing = false
     @State private var dropTargeted = false
     @State private var javaScriptRuntime = YTDLP.javaScriptRuntime
+    @State private var newestFirst = true
 
     private var transcriptions: TranscriptionModel { model.transcriptions }
     private var busy: Bool { transcriptions.job != nil }
@@ -63,12 +64,28 @@ private struct TranscribeHome: View {
             VStack(alignment: .leading, spacing: 28) {
                 header
                 if let job = transcriptions.job { JobCard(job: job) { transcriptions.cancel() } }
-                VStack(alignment: .leading, spacing: 12) {
-                    dropZone
-                    linkField
-                    ytDLPStatus
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionHeader(title: "Add media") { modelMenu }
+                    VStack(alignment: .leading, spacing: 12) {
+                        dropZone
+                        linkField
+                        ytDLPStatus
+                    }
                 }
-                transcriptList
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionHeader(title: "Transcripts") {
+                        if !transcriptions.transcripts.isEmpty {
+                            SectionOptionsMenu("Transcript options") {
+                                Picker("Order", selection: $newestFirst) {
+                                    Text("Newest first").tag(true)
+                                    Text("Oldest first").tag(false)
+                                }
+                                .pickerStyle(.inline)
+                            }
+                        }
+                    }
+                    transcriptList
+                }
             }
             .padding(.horizontal, 36)
             .padding(.vertical, 32)
@@ -82,27 +99,33 @@ private struct TranscribeHome: View {
         HStack(spacing: 14) {
             Text("Transcribe").font(.system(size: 26, weight: .semibold))
             Spacer(minLength: 8)
-            Menu {
-                Picker("Transcription model", selection: Binding(
-                    get: { model.transcriptionModel.id },
-                    set: { transcriptions.modelID = $0 }
-                )) {
-                    ForEach(model.models.filter(model.isModelInstalled)) { speechModel in
-                        Text(speechModel.name).tag(speechModel.id)
-                    }
-                }
-                .pickerStyle(.inline)
-                Text(model.transcriptionModel.processingLocation.disclosure)
-                Button("Manage models…") { model.selectedPage = .models }
-            } label: {
-                Label(model.transcriptionModel.name, systemImage: model.transcriptionModel.processingLocation.isOnDevice ? "cpu" : "network")
+            if !transcriptions.transcripts.isEmpty {
+                SectionBadge(text: transcriptions.transcripts.count == 1 ? "1 transcript" : "\(transcriptions.transcripts.count) transcripts")
             }
-            .menuStyle(.borderlessButton)
-            .fixedSize()
-            .disabled(busy)
-            .help("Speech model for files and links")
-            .accessibilityLabel("Transcription model, \(model.transcriptionModel.name)")
         }
+    }
+
+    private var modelMenu: some View {
+        Menu {
+            Picker("Transcription model", selection: Binding(
+                get: { model.transcriptionModel.id },
+                set: { transcriptions.modelID = $0 }
+            )) {
+                ForEach(model.models.filter(model.isModelInstalled)) { speechModel in
+                    Text(speechModel.name).tag(speechModel.id)
+                }
+            }
+            .pickerStyle(.inline)
+            Text(model.transcriptionModel.processingLocation.disclosure)
+            Button("Manage models…") { model.selectedPage = .models }
+        } label: {
+            Label(model.transcriptionModel.name, systemImage: model.transcriptionModel.processingLocation.isOnDevice ? "cpu" : "network")
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .disabled(busy)
+        .help("Speech model for files and links")
+        .accessibilityLabel("Transcription model, \(model.transcriptionModel.name)")
     }
 
     private var dropZone: some View {
@@ -169,7 +192,7 @@ private struct TranscribeHome: View {
                         .textSelection(.enabled)
                 }
             } else {
-                Text("Links need yt-dlp, a free open-source downloader. DeepType downloads it from GitHub and checks it against the published checksum only when you install it.")
+                Text("Links need yt-dlp, a free downloader. DeepType downloads it only when you install it and checks it against the published checksum.")
                     .fixedSize(horizontal: false, vertical: true)
                 Button(transcriptions.isInstallingYTDLP ? "Installing yt-dlp…" : "Install yt-dlp") { transcriptions.installYTDLP() }
                     .disabled(transcriptions.isInstallingYTDLP)
@@ -179,13 +202,17 @@ private struct TranscribeHome: View {
         .foregroundStyle(.secondary)
     }
 
+    private var orderedTranscripts: [Meeting] {
+        transcriptions.transcripts.sorted { newestFirst ? $0.createdAt > $1.createdAt : $0.createdAt < $1.createdAt }
+    }
+
     @ViewBuilder private var transcriptList: some View {
         if transcriptions.transcripts.isEmpty {
             Text("Your transcripts appear here.")
                 .foregroundStyle(.secondary)
                 .padding(.top, 8)
         } else {
-            ForEach(MeetingSection.group(transcriptions.transcripts), id: \.title) { section in
+            ForEach(MeetingSection.group(orderedTranscripts), id: \.title) { section in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(section.title)
                         .font(.caption.weight(.semibold))

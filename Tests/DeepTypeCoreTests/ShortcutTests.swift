@@ -148,7 +148,7 @@ import Testing
     model.changeCancelShortcut(f19)
     #expect(model.settings.cancelShortcut == f19)
     model.changeShortcut(f19)
-    #expect(model.settings.shortcut == .optionSpace)
+    #expect(model.settings.shortcut == .f5)
     model.changeCancelShortcut(nil)
     #expect(model.settings.cancelShortcut == nil)
 }
@@ -187,7 +187,7 @@ import Testing
     model.changeShortcut(f18)
     model.suspendShortcut()
     model.changeCancelShortcut(f18)
-    #expect(model.settings.shortcut == .optionSpace)
+    #expect(model.settings.shortcut == .f5)
     #expect(model.settings.cancelShortcut == f17)
 
     model.registerShortcut()
@@ -248,7 +248,7 @@ import Testing
     #expect(AppModel(store: LocalStore(directory: folder), startsServices: false).settings.extraShortcuts == [f18])
 
     model.changeShortcut(f18)
-    #expect(model.settings.shortcut == .optionSpace)
+    #expect(model.settings.shortcut == .f5)
 
     model.changeExtraShortcut(at: 1, to: f19)
     #expect(model.settings.extraShortcuts == [f18, f19])

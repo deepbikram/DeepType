@@ -3,7 +3,8 @@
 @theme {
   --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1);
   --color-ink: #141416;
-  --color-paper: #f1efeb;
+  --color-paper: #f4f1e9;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
 }
 
 @keyframes wave {
@@ -65,51 +66,6 @@
   }
 }
 
-@keyframes testimonial-scroll {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@layer components {
-  .testimonials-track {
-    animation: testimonial-scroll 40s linear infinite;
-  }
-  .testimonials-track-reverse {
-    animation-direction: reverse;
-  }
-  .testimonials-track .testimonial-card {
-    width: min(21rem, calc(100vw - 3rem));
-    height: auto;
-    flex-shrink: 0;
-  }
-  .testimonials-marquee:is(:hover, :focus-within) .testimonials-track {
-    animation-play-state: paused;
-  }
-  .testimonials-window:focus-within {
-    overflow-x: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .testimonials-track {
-    width: 100%;
-    animation: none !important;
-  }
-  .testimonials-group {
-    display: grid;
-    width: 100%;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-    padding-right: 0;
-  }
-  .testimonials-track .testimonial-card {
-    width: auto;
-  }
-  .testimonials-group[aria-hidden="true"] {
-    display: none;
-  }
-}
-
 @layer base {
   h1,
   h2,
@@ -148,22 +104,15 @@
     @apply mx-auto w-full max-w-[1100px] px-6;
   }
   .eyebrow {
-    @apply text-xs font-medium uppercase tracking-widest text-zinc-500;
+    @apply text-xs font-medium uppercase tracking-[0.18em] text-ink/45;
   }
   .download-cta {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2 font-semibold transition-all duration-700 ease-fluid hover:bg-zinc-700 active:scale-[0.98];
-    background-color: #181818;
-    color: #fff;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2 font-semibold transition-all duration-700 ease-fluid hover:bg-black active:scale-[0.98];
+    background-color: var(--color-ink);
+    color: var(--color-paper);
   }
   .comparison-link {
     @apply grid grid-cols-[1fr_auto] items-center gap-6 border-b border-zinc-200 py-8 transition-colors duration-700 ease-fluid hover:bg-zinc-50 sm:grid-cols-[auto_1fr_auto] lg:grid-cols-[auto_1fr_auto_auto];
-  }
-  .home-hero .download-cta {
-    @apply min-h-13 w-full bg-white px-6 text-[#00159d] hover:bg-white/90 sm:w-auto;
-  }
-  .home-hero a:focus-visible {
-    outline: 2px solid white;
-    outline-offset: 4px;
   }
 }
 

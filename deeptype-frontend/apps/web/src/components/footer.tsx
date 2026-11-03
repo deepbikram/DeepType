@@ -2,14 +2,14 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import BrandMark from "@/components/brand-mark";
 import { comparisons } from "@/lib/comparisons";
-import { DOWNLOAD_URL, GITHUB_URL, INTEL_DOWNLOAD_URL } from "@/lib/links";
+import { DOWNLOAD_URL, INTEL_DOWNLOAD_URL } from "@/lib/links";
 
 const LINK =
-  "text-sm text-zinc-600 transition-colors duration-700 ease-fluid hover:text-zinc-900";
+  "text-sm text-ink/65 transition-colors duration-700 ease-fluid hover:text-ink";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-zinc-200">
+    <footer className="border-t border-ink/10">
       <div className="page-shell grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.5fr_1fr]">
         <div className="max-w-xs">
           <Link
@@ -19,35 +19,21 @@ export default function Footer() {
             <BrandMark className="size-8" />
             DeepType
           </Link>
-          <p className="mt-4 text-sm text-zinc-600">
+          <p className="mt-4 text-sm text-ink/65">
             A quieter way to get your thoughts down. Local dictation for macOS.
           </p>
-          <p className="mt-6 text-xs text-zinc-500">
+          <p className="mt-6 text-xs text-ink/45">
             © {new Date().getFullYear()} DeepType.
             <br />
             Built by{" "}
             <a
-              href="https://x.com/code_kartik"
-              className="underline underline-offset-2 hover:text-zinc-900"
+              href="https://deepbikram.com.np"
+              className="underline underline-offset-2 hover:text-ink"
             >
-              Kartik Labhshetwar
+              Deep Bikram Thapa Chhetri
             </a>
             .
           </p>
-          <a
-            href="https://usefulshelf.co/apps/deeptype?utm_source=deeptype.com&utm_medium=referral&utm_campaign=badge&utm_content=light"
-            target="_blank"
-            rel="noopener"
-            className="mt-6 block w-max"
-          >
-            <img
-              src="https://usefulshelf.co/badge/deeptype.svg"
-              alt="Featured on UsefulShelf"
-              width={248}
-              height={66}
-              loading="lazy"
-            />
-          </a>
         </div>
         <FooterColumn title="Product">
           <a href={DOWNLOAD_URL} className={LINK}>
@@ -59,12 +45,6 @@ export default function Footer() {
           <Link to="/" hash="how-it-works" className={LINK}>
             How it works
           </Link>
-          <Link to="/changelog" className={LINK}>
-            Changelog
-          </Link>
-          <a href={GITHUB_URL} className={LINK}>
-            GitHub
-          </a>
         </FooterColumn>
         <FooterColumn title="Blog">
           {comparisons.map((item) => (
@@ -88,9 +68,6 @@ export default function Footer() {
           <Link to="/terms" className={LINK}>
             Software terms
           </Link>
-          <a href={`${GITHUB_URL}/issues`} className={LINK}>
-            Report an issue
-          </a>
         </FooterColumn>
       </div>
     </footer>

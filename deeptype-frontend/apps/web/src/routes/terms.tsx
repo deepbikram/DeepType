@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GITHUB_URL } from "@/lib/links";
 import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
@@ -20,14 +19,9 @@ export const Route = createFileRoute("/terms")({
       </p>
       <h2>License and notices</h2>
       <p>
-        Read the{" "}
-        <a href={`${GITHUB_URL}/blob/main/LICENSE`}>Apache 2.0 license</a> and
-        the project’s{" "}
-        <a href={`${GITHUB_URL}/blob/main/docs/oss-reuse.md`}>
-          third party notices
-        </a>
-        . Dependencies, speech models and tokenizers retain their own licenses
-        and terms.
+        The Apache 2.0 license and third party notices are supplied with the
+        software. Dependencies, speech models and tokenizers retain their own
+        licenses and terms.
       </p>
       <h2>Review your transcripts</h2>
       <p>

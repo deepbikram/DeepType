@@ -66,10 +66,24 @@ for resource in "$binary_dir"/*.bundle; do
     [[ "$(basename "$resource")" == FluidAudio_* ]] && continue
     cp -R "$resource" "$app/Contents/MacOS/"
 done
-identity="${CODESIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | awk '/\)/ {print $2; exit}' || true)}"
+# ponytail: stable Team ID + bundle ID keeps TCC (Mic/Accessibility) across updates.
+# Ad-hoc signatures change on every build, so macOS revokes them each time.
+identity="${CODESIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | grep 'Developer ID Application.*8JL39GK2DC' | awk '{print $2; exit}' || true)}"
+if [[ -z "$identity" ]]; then
+    identity="${CODESIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | awk '/\)/ {print $2; exit}' || true)}"
+fi
 if [[ -z "$identity" ]]; then
     identity=-
-    echo 'warning: ad-hoc signing changes on every build, so macOS revokes Accessibility (paste) each time. Set CODESIGN_IDENTITY to keep it.' >&2
+    echo 'warning: ad-hoc signing changes on every build, so macOS revokes Accessibility (paste) each time. Set CODESIGN_IDENTITY to a persistent identity to keep permissions across rebuilds.' >&2
+    # Sign nested code first so the outer seal covers stable inner signatures (no --deep).
+    while IFS= read -r nested; do
+        codesign --force --sign "$identity" "$nested"
+    done < <(find "$app/Contents/Frameworks" "$app/Contents/MacOS" -name '*.framework' -o -name '*.bundle' -o -name '*.dylib' 2>/dev/null || true)
+    codesign --force --sign "$identity" --entitlements Resources/DeepType.entitlements "$app"
+else
+    while IFS= read -r nested; do
+        codesign --force --options runtime --timestamp --sign "$identity" "$nested"
+    done < <(find "$app/Contents/Frameworks" "$app/Contents/MacOS" -name '*.framework' -o -name '*.bundle' -o -name '*.dylib' 2>/dev/null || true)
+    codesign --force --options runtime --timestamp --sign "$identity" --entitlements Resources/DeepType.entitlements "$app"
 fi
-codesign --force --deep --sign "$identity" --entitlements Resources/DeepType.entitlements "$app"
 echo "$app"

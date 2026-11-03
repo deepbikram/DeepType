@@ -81,7 +81,7 @@ struct StyleView: View {
         let recentApps = recentAppsByContext
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                SettingsSection("Cleanup in every app") {
+                SettingsSection("Cleanup in every app", accessory: AnyView(cleanupOptions)) {
                     SettingRow("Auto cleanup", caption: model.settings.cleanup.detail) {
                         Picker("Auto cleanup", selection: setting(\.cleanup).animation(reveal)) {
                             ForEach(CleanupLevel.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -130,7 +130,14 @@ struct StyleView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    SectionHeader("Tone by app")
+                    SectionHeader(title: "Tone by app") {
+                        SectionOptionsMenu("Tone options") {
+                            Button("Reset all tones") {
+                                model.settings.styles = [:]
+                                model.saveSettings()
+                            }
+                        }
+                    }
                     VStack(spacing: 12) {
                         ForEach(StyleContext.allCases, id: \.self) { context in
                             toneCard(context, recentApps: recentApps[context])
@@ -188,6 +195,18 @@ struct StyleView: View {
     }
 
     private var reveal: Animation? { reduceMotion ? nil : .smooth(duration: 0.25) }
+
+    private var cleanupOptions: some View {
+        SectionOptionsMenu("Cleanup options") {
+            Button("Reset cleanup settings") {
+                model.settings.cleanup = .light
+                model.settings.useScreenContext = false
+                model.settings.recognizeScreenText = false
+                model.settings.cleanupSelection = nil
+                model.saveSettings()
+            }
+        }
+    }
 
     private var recentAppsByContext: [StyleContext: String] {
         Dictionary(grouping: Set(model.history.compactMap(\.appBundleID)), by: { AppCategory(bundleID: $0).style }).compactMapValues { ids in

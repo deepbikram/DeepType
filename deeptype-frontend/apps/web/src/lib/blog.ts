@@ -7,7 +7,7 @@ const modules = import.meta.glob<{ default: MDXContent; meta?: unknown }>(
 
 /** Validates a post's `export const meta` so a bad post fails the build with the file name. */
 function parseMeta(file: string, meta: unknown) {
-  const { title, description, date } = Object(meta);
+  const { title, description, date, dateModified } = Object(meta);
   const problems = [
     (typeof title !== "string" || !title.trim()) && "add a title",
     (typeof description !== "string" || description.trim().length < 50) &&
@@ -16,11 +16,21 @@ function parseMeta(file: string, meta: unknown) {
       !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
       Number.isNaN(Date.parse(date))) &&
       "use a YYYY-MM-DD date",
+    (dateModified !== undefined &&
+      (typeof dateModified !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(dateModified) ||
+        Number.isNaN(Date.parse(dateModified)))) &&
+      "use a YYYY-MM-DD dateModified or omit it",
   ].filter(Boolean);
   if (problems.length > 0) {
     throw new Error(`${file.replace("../", "src/")}: ${problems.join("; ")}`);
   }
-  return { title: title as string, description: description as string, date: date as string };
+  return {
+    title: title as string,
+    description: description as string,
+    date: date as string,
+    dateModified: (dateModified as string | undefined) ?? null,
+  };
 }
 
 export const articles = Object.entries(modules)

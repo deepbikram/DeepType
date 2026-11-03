@@ -94,6 +94,47 @@ extension SectionHeader where Accessory == EmptyView {
     }
 }
 
+/// Compact options control for a section header: sorting, filtering or resetting.
+struct SectionOptionsMenu<Content: View>: View {
+    let help: String
+    @ViewBuilder let content: Content
+
+    init(_ help: String = "Section options", @ViewBuilder content: () -> Content) {
+        self.help = help
+        self.content = content()
+    }
+
+    var body: some View {
+        Menu { content } label: {
+            Image(systemName: "ellipsis")
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 22, height: 20)
+                .contentShape(.rect)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help(help)
+        .accessibilityLabel(help)
+    }
+}
+
+/// Small count or scope label for a section header.
+struct SectionBadge: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .background(Color.primary.opacity(0.06), in: .capsule)
+            .fixedSize()
+    }
+}
+
 /// Small borderless link that moves to another page, e.g. "View all ›".
 struct PageLink: View {
     let title: String

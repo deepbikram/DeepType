@@ -40,7 +40,7 @@ import Testing
     #expect(!settings.pauseMediaWhileDictating)
     #expect(!settings.showInDock)
     #expect(settings.theme == .dark)
-    #expect(settings.shortcut == .optionSpace)
+    #expect(settings.shortcut == .f5)
     #expect(settings.cancelShortcut == nil)
     #expect(settings.selectedTextShortcut == nil)
     #expect(settings.microphone == nil)

@@ -240,6 +240,7 @@ final class AppModel {
             statusMessage = "Could not read your saved workspace. It has been left untouched: \(error.localizedDescription)"
         }
         guard startsServices else { return }
+        if settings.usesMicKey { MicKeyRemap.apply() }
         applyAppearance()
         migrateLegacyOnboarding()
         if !models.contains(where: { $0.id == settings.selectedModelID }) { settings.selectedModelID = "apple" }
@@ -418,8 +419,24 @@ final class AppModel {
         saveSettings()
     }
 
-    func changeCancelShortcut(_ shortcut: DictationShortcut?) {
-        guard !isBusy else { return }
+    /// Points the hardware microphone key at F5 and makes F5 the dictation shortcut.
+    func setUsesMicKey(_ enabled: Bool) {
+        guard !isBusy, enabled != settings.usesMicKey else { return }
+        if enabled {
+            if settings.shortcut != .f5 { changeShortcut(.f5) }
+            guard settings.shortcut == .f5 else { return }
+            guard MicKeyRemap.apply() else {
+                statusMessage = "Couldn’t remap the microphone key. Try again, or set F5 as the shortcut by hand."
+                return
+            }
+        } else {
+            MicKeyRemap.reset()
+        }
+        settings.usesMicKey = enabled
+        saveSettings()
+    }
+
+    func changeCancelShortcut(_ shortcut: DictationShortcut?) {        guard !isBusy else { return }
         // Esc is the default, so storing it again would do nothing.
         let shortcut = shortcut == .escape ? nil : shortcut
         if let shortcut {

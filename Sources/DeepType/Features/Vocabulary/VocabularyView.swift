@@ -2,11 +2,36 @@ import DeepTypeCore
 import SwiftUI
 
 struct VocabularyView: View {
+    private enum Sort: CaseIterable { case added, alphabetical, learnedFirst }
+    private enum Filter: CaseIterable { case all, learned, manual }
+
     @Bindable var model: AppModel
     @State private var phrase = ""
     @State private var replacement = ""
+    @State private var query = ""
+    @State private var sort = Sort.added
+    @State private var filter = Filter.all
 
     private var canAdd: Bool { !phrase.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    private var visibleVocabulary: [VocabularyEntry] {
+        let matching = model.vocabulary.filter { entry in
+            let matchesQuery = query.isEmpty
+                || entry.phrase.localizedStandardContains(query)
+                || entry.replacement.localizedStandardContains(query)
+            let matchesFilter = switch filter {
+            case .all: true
+            case .learned: entry.learned
+            case .manual: !entry.learned
+            }
+            return matchesQuery && matchesFilter
+        }
+        switch sort {
+        case .added: return matching
+        case .alphabetical: return matching.sorted { $0.phrase.localizedStandardCompare($1.phrase) == .orderedAscending }
+        case .learnedFirst: return matching.sorted { $0.learned != $1.learned ? $0.learned : $0.phrase.localizedStandardCompare($1.phrase) == .orderedAscending }
+        }
+    }
 
     var body: some View {
         Form {
@@ -34,8 +59,11 @@ struct VocabularyView: View {
                 if model.vocabulary.isEmpty {
                     Text("Add a name that often gets misspelled, a technical term or a phrase you use every day.")
                         .foregroundStyle(.secondary)
+                } else if visibleVocabulary.isEmpty {
+                    Text("No entries match this search or filter.")
+                        .foregroundStyle(.secondary)
                 }
-                ForEach(model.vocabulary) { entry in
+                ForEach(visibleVocabulary) { entry in
                     LabeledContent {
                         HStack(spacing: 10) {
                             Text(entry.replacement.isEmpty ? entry.phrase : entry.replacement)
@@ -64,10 +92,30 @@ struct VocabularyView: View {
                     }
                 }
             } header: {
-                if model.vocabulary.isEmpty {
-                    Text("Your Vocabulary")
-                } else {
-                    Text("^[\(model.vocabulary.count) entry](inflect: true)")
+                HStack {
+                    if model.vocabulary.isEmpty {
+                        Text("Your Vocabulary")
+                    } else {
+                        Text("^[\(visibleVocabulary.count) entry](inflect: true)")
+                    }
+                    Spacer()
+                    if !model.vocabulary.isEmpty {
+                        SectionOptionsMenu("Vocabulary options") {
+                            Picker("Order", selection: $sort) {
+                                Text("Added order").tag(Sort.added)
+                                Text("Alphabetical").tag(Sort.alphabetical)
+                                Text("Learned first").tag(Sort.learnedFirst)
+                            }
+                            .pickerStyle(.inline)
+                            Divider()
+                            Picker("Show", selection: $filter) {
+                                Text("All entries").tag(Filter.all)
+                                Text("Learned only").tag(Filter.learned)
+                                Text("Added by me").tag(Filter.manual)
+                            }
+                            .pickerStyle(.inline)
+                        }
+                    }
                 }
             } footer: {
                 if model.settings.learnCorrections {
@@ -77,6 +125,7 @@ struct VocabularyView: View {
             }
         }
         .formStyle(.grouped)
+        .searchable(text: $query, prompt: "Search vocabulary")
     }
 
     private var phraseBoosterSection: some View {

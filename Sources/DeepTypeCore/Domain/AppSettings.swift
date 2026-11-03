@@ -27,6 +27,19 @@ public enum DictationSound: String, Codable, CodingKeyRepresentable, CaseIterabl
     }
 }
 
+/// Where the floating recording capsule appears on screen.
+public enum CapsulePosition: String, Codable, CaseIterable, Sendable {
+    case bottomCenter, topCenter, nearCursor
+
+    public var title: String {
+        switch self {
+        case .bottomCenter: "Bottom"
+        case .topCenter: "Top"
+        case .nearCursor: "Near cursor"
+        }
+    }
+}
+
 /// Minutes a loaded speech model may sit unused before the app releases it.
 public enum ModelIdleUnload: Int, Codable, CaseIterable, Sendable {
     case never = 0, fiveMinutes = 5, fifteenMinutes = 15, oneHour = 60
@@ -58,6 +71,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
     /// Shows Parakeet's provisional words in the capsule while recording.
     public var showLiveText: Bool = true
     public var hideCapsuleWhileDictating: Bool = false
+    public var capsulePosition: CapsulePosition = .bottomCenter
+    /// Shows the ✕ button on the dictation capsule; Esc and the cancel shortcut still cancel.
+    public var showCapsuleCancel: Bool = true
+    /// Shows the ✓ button on the dictation capsule; the recording shortcut still finishes.
+    public var showCapsuleFinish: Bool = true
     public var soundEffects: Bool = true
     /// macOS system sound names picked per cue; missing cues use `DictationSound.defaultSoundName`.
     public var sounds: [DictationSound: String] = [:]
@@ -78,7 +96,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var silenceThreshold: Float = 0.002
     public var dictationMode: DictationMode = .hold
     public var unloadModelWhenIdle: ModelIdleUnload = .never
-    public var shortcut: DictationShortcut = .optionSpace
+    public var shortcut: DictationShortcut = .f5
+    /// Points the hardware microphone key at F5 (via `MicKeyRemap`) and makes F5 the shortcut.
+    public var usesMicKey: Bool = true
     /// Extra shortcuts that start dictation too; `shortcut` stays the one Reset and Shift use.
     public var extraShortcuts: [DictationShortcut] = []
     /// Optional extra shortcut that cancels a dictation without pasting it; nil and Escape always cancel.
@@ -196,6 +216,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
         showCapsule = try container.decode(Bool.self, forKey: .showCapsule)
         showLiveText = try container.decodeIfPresent(Bool.self, forKey: .showLiveText) ?? true
         hideCapsuleWhileDictating = try container.decodeIfPresent(Bool.self, forKey: .hideCapsuleWhileDictating) ?? false
+        capsulePosition = try container.decodeIfPresent(CapsulePosition.self, forKey: .capsulePosition) ?? .bottomCenter
+        showCapsuleCancel = try container.decodeIfPresent(Bool.self, forKey: .showCapsuleCancel) ?? true
+        showCapsuleFinish = try container.decodeIfPresent(Bool.self, forKey: .showCapsuleFinish) ?? true
         soundEffects = try container.decodeIfPresent(Bool.self, forKey: .soundEffects) ?? true
         sounds = try container.decodeIfPresent([DictationSound: String].self, forKey: .sounds) ?? [:]
         pauseMediaWhileDictating = try container.decodeIfPresent(Bool.self, forKey: .pauseMediaWhileDictating) ?? false
@@ -210,7 +233,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         silenceThreshold = try container.decode(Float.self, forKey: .silenceThreshold)
         dictationMode = try container.decodeIfPresent(DictationMode.self, forKey: .dictationMode) ?? .hold
         unloadModelWhenIdle = try container.decodeIfPresent(ModelIdleUnload.self, forKey: .unloadModelWhenIdle) ?? .never
-        shortcut = try container.decodeIfPresent(DictationShortcut.self, forKey: .shortcut) ?? .optionSpace
+        shortcut = try container.decodeIfPresent(DictationShortcut.self, forKey: .shortcut) ?? .f5
+        usesMicKey = try container.decodeIfPresent(Bool.self, forKey: .usesMicKey) ?? false
         extraShortcuts = try container.decodeIfPresent([DictationShortcut].self, forKey: .extraShortcuts) ?? []
         cancelShortcut = try container.decodeIfPresent(DictationShortcut.self, forKey: .cancelShortcut)
         extraCancelShortcuts = try container.decodeIfPresent([DictationShortcut].self, forKey: .extraCancelShortcuts) ?? []

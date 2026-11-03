@@ -4,6 +4,8 @@ import SwiftUI
 
 struct HomeView: View {
     @Bindable var model: AppModel
+    @AppStorage("homeUsagePeriod") private var usagePeriod = InsightsPeriod.allTime
+    @AppStorage("homeRecentCount") private var recentCount = 5
 
     var body: some View {
         ScrollView {
@@ -16,9 +18,18 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     SectionHeader(title: "Usage") {
-                        if !model.history.isEmpty { PageLink(title: "Insights") { model.selectedPage = .insights } }
+                        HStack(spacing: 12) {
+                            Picker("Usage period", selection: $usagePeriod) {
+                                ForEach(InsightsPeriod.allCases) { Text($0.periodTitle).tag($0) }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .controlSize(.small)
+                            .fixedSize()
+                            if !model.history.isEmpty { PageLink(title: "Insights") { model.selectedPage = .insights } }
+                        }
                     }
-                    UsageStats(history: model.history)
+                    UsageStats(history: model.history, period: usagePeriod)
                     if !model.settings.saveHistory && !model.history.isEmpty {
                         Text("History is off, so new dictations are not counted.")
                             .font(.callout)
@@ -29,7 +40,21 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     SectionHeader(title: "Recent") {
-                        if !model.history.isEmpty { PageLink(title: "View all \(model.history.count.formatted())") { model.selectedPage = .history } }
+                        HStack(spacing: 12) {
+                            if !model.history.isEmpty {
+                                SectionOptionsMenu("Recent options") {
+                                    Picker("Show", selection: $recentCount) {
+                                        Text("5 dictations").tag(5)
+                                        Text("10 dictations").tag(10)
+                                        Text("20 dictations").tag(20)
+                                    }
+                                    .pickerStyle(.inline)
+                                    Divider()
+                                    Button("Open History") { model.selectedPage = .history }
+                                }
+                                PageLink(title: "View all \(model.history.count.formatted())") { model.selectedPage = .history }
+                            }
+                        }
                     }
                     recent
                 }
@@ -94,7 +119,7 @@ struct HomeView: View {
         } else {
             Card(padding: 4) {
                 VStack(spacing: 0) {
-                    ForEach(Array(model.history.prefix(5).enumerated()), id: \.element.id) { index, transcript in
+                    ForEach(Array(model.history.prefix(recentCount).enumerated()), id: \.element.id) { index, transcript in
                         if index > 0 { Divider().padding(.horizontal, 12) }
                         RecentRow(transcript: transcript, onCopy: { model.copyTranscript(transcript) }) {
                             model.selectedPage = .history
@@ -103,6 +128,16 @@ struct HomeView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+private extension InsightsPeriod {
+    var periodTitle: String {
+        switch self {
+        case .week: "7 days"
+        case .month: "30 days"
+        case .allTime: "All time"
         }
     }
 }
@@ -233,34 +268,26 @@ private struct ProminentButton: View {
     let symbol: String
     let tint: Color
     let action: () -> Void
-    @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 9)
-                .background(tint.gradient, in: .capsule)
-                .brightness(hovering ? 0.06 : 0)
-                .shadow(color: tint.opacity(hovering ? 0.35 : 0.2), radius: hovering ? 10 : 6, y: 2)
-                .contentShape(.capsule)
         }
-        .buttonStyle(PressableButtonStyle())
-        .onHover { hovering = $0 }
-        .animation(.ui, value: hovering)
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .tint(tint)
     }
 }
 
 private struct UsageStats: View {
     let history: [Transcript]
+    let period: InsightsPeriod
 
     var body: some View {
-        let insights = UsageInsights(history)
+        let insights = UsageInsights(history, period: period)
         let tiles = [
             StatTile(label: "Words dictated", value: insights.current.words.formatted(), unit: nil),
-            StatTile(label: "Speaking time", value: speakingTime, unit: nil),
+            StatTile(label: "Speaking time", value: Duration.seconds(insights.current.speakingTime).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2)), unit: nil),
             StatTile(label: "Average pace", value: insights.current.wordsPerMinute.formatted(), unit: "wpm"),
             StatTile(label: "Current streak", value: insights.currentStreak.formatted(), unit: insights.currentStreak == 1 ? "day" : "days"),
         ]
@@ -271,11 +298,6 @@ private struct UsageStats: View {
                 GridRow { tiles[2]; tiles[3] }
             }
         }
-    }
-
-    private var speakingTime: String {
-        let seconds = history.reduce(0) { $0 + $1.duration }
-        return Duration.seconds(seconds).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2))
     }
 }
 
@@ -314,6 +336,7 @@ private struct RecentRow: View {
     let onOpen: () -> Void
     @State private var hovering = false
     @State private var copied = false
+    @FocusState private var copyFocused: Bool
     @State private var app: (name: String, icon: NSImage)?
 
     var body: some View {
@@ -358,7 +381,8 @@ private struct RecentRow: View {
             }
             .buttonStyle(.borderless)
             .foregroundStyle(copied ? Color.green : .secondary)
-            .opacity(hovering || copied ? 1 : 0)
+            .opacity(hovering || copied || copyFocused ? 1 : 0.4)
+            .focused($copyFocused)
             .help("Copy dictation")
             .accessibilityLabel("Copy dictation")
         }
@@ -465,8 +489,9 @@ private struct SetupTile: View {
                     Circle()
                         .fill(ready ? Color.green : .orange)
                         .frame(width: 6, height: 6)
+                        .accessibilityHidden(true)
                     Text(detail)
-                        .foregroundStyle(ready ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.orange))
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }

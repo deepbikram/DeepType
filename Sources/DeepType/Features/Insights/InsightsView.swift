@@ -54,21 +54,43 @@ struct InsightsView: View {
 
     private func content(_ insights: UsageInsights) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                header(insights)
+            VStack(alignment: .leading, spacing: 24) {
                 if !savesHistory {
                     Label("History is off, so new dictations are not counted.", systemImage: "info.circle")
                         .foregroundStyle(.secondary)
                 }
-                MetricTiles(insights: insights)
-                ActivityCard(insights: insights)
-                row {
-                    TopAppsCard(insights: insights)
-                    TimeOfDayCard(insights: insights)
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionHeader(title: "Overview") {
+                        HStack(spacing: 12) {
+                            Text((insights.start..<Date.now).formatted(.interval.month(.abbreviated).day().year()))
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .contentTransition(.opacity)
+                            Picker("Period", selection: $period) {
+                                ForEach(InsightsPeriod.allCases) { Text($0.title).tag($0) }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .controlSize(.small)
+                            .fixedSize()
+                        }
+                    }
+                    MetricTiles(insights: insights)
                 }
-                row {
-                    CleanupCard(insights: insights)
-                    StreakCard(insights: insights)
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionHeader("Activity")
+                    ActivityCard(insights: insights)
+                    row {
+                        TimeOfDayCard(insights: insights)
+                        StreakCard(insights: insights)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionHeader("Breakdown")
+                    row {
+                        TopAppsCard(insights: insights)
+                        CleanupCard(insights: insights)
+                    }
                 }
             }
             .onGeometryChange(for: Bool.self) { $0.size.width >= 640 } action: { isWide = $0 }
@@ -83,21 +105,6 @@ struct InsightsView: View {
                     Label("Share Insights", systemImage: "square.and.arrow.up")
                 }
             }
-        }
-    }
-
-    private func header(_ insights: UsageInsights) -> some View {
-        HStack {
-            Text((insights.start..<Date.now).formatted(.interval.month(.abbreviated).day().year()))
-                .font(.title3.weight(.semibold))
-                .contentTransition(.opacity)
-            Spacer(minLength: 12)
-            Picker("Period", selection: $period) {
-                ForEach(InsightsPeriod.allCases) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
         }
     }
 

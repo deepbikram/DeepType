@@ -35,23 +35,11 @@ struct SettingsView: View {
                 }
 
                 SettingsSection("Shortcut") {
-                    ShortcutRecorder(model: model, kind: .dictation)
-                    ForEach(Array(model.settings.extraShortcuts.enumerated()), id: \.offset) { index, _ in
-                        RowDivider()
-                        ShortcutRecorder(model: model, kind: .extra(index))
-                    }
-                    RowDivider()
-                    ShortcutRecorder(model: model, kind: .extra(model.settings.extraShortcuts.count))
-                    RowDivider()
-                    ShortcutRecorder(model: model, kind: .cancel)
-                    ForEach(Array(model.settings.extraCancelShortcuts.enumerated()), id: \.offset) { index, _ in
-                        RowDivider()
-                        ShortcutRecorder(model: model, kind: .extraCancel(index))
-                    }
-                    RowDivider()
-                    ShortcutRecorder(model: model, kind: .extraCancel(model.settings.extraCancelShortcuts.count))
-                    RowDivider()
-                    ShortcutRecorder(model: model, kind: .selectedText)
+                ShortcutListRow(model: model, mode: .dictation)
+                RowDivider()
+                ShortcutListRow(model: model, mode: .cancel)
+                RowDivider()
+                ShortcutRecorder(model: model, kind: .selectedText)
                     RowDivider()
                     SettingRow("Behavior", caption: behaviorCaption) {
                         Picker("Behavior", selection: setting(\.dictationMode)) {
@@ -63,6 +51,39 @@ struct SettingsView: View {
                         .labelsHidden()
                         .fixedSize()
                         .disabled(model.isBusy)
+                    }
+                }
+
+                SettingsSection("Microphone key") {
+                    SettingRow("1. Turn off Apple’s Dictation",
+                               caption: "System Settings → Keyboard → Dictation → Shortcut → Off. Otherwise both listen for the key.") {
+                        Button("Open Keyboard Settings") {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension?Dictation") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .disabled(model.isBusy)
+                    }
+                    RowDivider()
+                    SettingRow("2. Use the microphone key",
+                               caption: "Maps the key to F5 and sets F5 as your dictation shortcut. Turn it off to give the key back to macOS.") {
+                        Toggle("Use the microphone key", isOn: Binding(
+                            get: { model.settings.usesMicKey },
+                            set: { model.setUsesMicKey($0) }
+                        ))
+                        .labelsHidden()
+                        .controlSize(.small)
+                        .disabled(model.isBusy)
+                    }
+                    if model.settings.usesMicKey {
+                        RowDivider()
+                        SettingRow("Ready",
+                                   caption: "Press and hold the microphone key to dictate in any app. DeepType reapplies the remap when it launches.") {
+                            Label("Microphone key ready", systemImage: "checkmark.circle.fill")
+                                .labelStyle(.iconOnly)
+                                .foregroundStyle(.green)
+                                .symbolRenderingMode(.multicolor)
+                        }
                     }
                 }
 
@@ -205,11 +226,30 @@ struct SettingsView: View {
                     SettingToggle("Show words as you speak", caption: "Previews Parakeet’s recognition in the capsule while you record. The pasted text is still the full recognition.", isOn: setting(\.showLiveText))
                         .disabled(model.settings.hideCapsuleWhileDictating)
                     RowDivider()
+                    SettingRow("Capsule position", caption: "Bottom or top of the screen, or next to the pointer where you start dictating.") {
+                        Picker("Capsule position", selection: setting(\.capsulePosition)) {
+                            ForEach(CapsulePosition.allCases, id: \.self) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    RowDivider()
+                    SettingToggle("Capsule cancel button", caption: "Shows ✕ on the dictation capsule. Esc and your cancel shortcut still cancel.", isOn: setting(\.showCapsuleCancel))
+                        .disabled(model.settings.hideCapsuleWhileDictating)
+                    RowDivider()
+                    SettingToggle("Capsule finish button", caption: "Shows ✓ on the dictation capsule. Your recording shortcut still finishes.", isOn: setting(\.showCapsuleFinish))
+                        .disabled(model.settings.hideCapsuleWhileDictating)
+                    RowDivider()
                     SettingToggle("Detect meetings", caption: "Offer the notetaker when Zoom, Google Meet, Teams, a Slack huddle or another call starts using the microphone. Calls in a browser need Accessibility.", isOn: setting(\.detectMeetings))
                     RowDivider()
                     SettingToggle("Open at login", caption: "Have DeepType ready when your Mac starts.", isOn: setting(\.launchAtLogin))
                     RowDivider()
                     SettingToggle("Save dictation history", caption: "Keep text on this Mac so you can find and reuse it.", isOn: setting(\.saveHistory))
+                    RowDivider()
+                    SettingRow("Quit DeepType", caption: "Closes the app completely. Closing the window keeps it running in the menu bar.") {
+                        Button("Quit DeepType") { NSApplication.shared.terminate(nil) }
+                    }
                 }
 
                 SettingsSection("Calendar") {
@@ -403,6 +443,231 @@ struct SettingsView: View {
     }
 }
 
+/// One compact row holding the dictation shortcut and every extra shortcut.
+private struct ShortcutListRow: View {
+    enum Mode { case dictation, cancel }
+    let model: AppModel
+    let mode: Mode
+    @State private var target: Target?
+    @State private var monitor: Any?
+    @State private var held: ShortcutModifiers = []
+    @State private var modifierCandidate: DictationShortcut?
+    @State private var feedback: String?
+
+    private enum Target: Equatable {
+        case main, extra(Int), newExtra
+    }
+
+    private var capturing: Target? { monitor != nil ? target : nil }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(mode == .dictation ? "Recording trigger" : "Cancel shortcut")
+                    .font(.headline)
+                Text(caption)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 12) {
+                shortcutRow(mainShortcut, .main)
+                ForEach(Array(extras.enumerated()), id: \.offset) { index, shortcut in
+                    shortcutRow(shortcut, .extra(index))
+                }
+                addRow
+            }
+        }
+        .padding(16)
+        .animation(.ui, value: capturing)
+        .disabled(model.isBusy)
+        .onChange(of: feedback) { _, text in if let text { AccessibilityNotification.Announcement(text).post() } }
+        .onDisappear(perform: stop)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in stop() }
+    }
+
+    private var mainShortcut: DictationShortcut? {
+        mode == .dictation ? model.settings.shortcut : model.settings.cancelShortcut ?? .escape
+    }
+
+    private var extras: [DictationShortcut] {
+        mode == .dictation ? model.settings.extraShortcuts : model.settings.extraCancelShortcuts
+    }
+
+    private var captureHint: String {
+        mode == .dictation
+            ? "Press a combination with ⌃, ⌥, ⇧ or ⌘, tap a single modifier on its own, or press an F-key. Esc cancels."
+            : "Hold ⌃, ⌥ or ⌘ and press a key, or press an F-key. Esc leaves it as is."
+    }
+
+    private var caption: String {
+        if capturing != nil {
+            return feedback ?? captureHint
+        }
+        return mode == .dictation
+            ? "Click a shortcut, then press a combination with ⌃, ⌥, ⇧ or ⌘, or tap a single modifier on its own. Keep several and use whichever suits the moment."
+            : "Click a shortcut, then hold ⌃, ⌥ or ⌘ and press a key, or press an F-key. Esc always cancels."
+    }
+
+    @ViewBuilder private func shortcutRow(_ shortcut: DictationShortcut?, _ slot: Target) -> some View {
+        let active = capturing == slot
+        HStack(spacing: 6) {
+            Button {
+                if active { stop() } else { start(slot) }
+            } label: {
+                Text(label(shortcut, active: active))
+                    .font(.body.weight(.medium))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 7, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(active ? Color.accentColor : Color.primary.opacity(0.1)))
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(active ? "Waiting for a shortcut" : (shortcut?.spokenName ?? "Add a shortcut"))
+            .accessibilityHint(mode == .dictation
+                ? "Click, then press a shortcut, or press and release a modifier such as Option."
+                : "Click, then hold Control, Option or Command and press a key, or press an F-key.")
+            if mode == .dictation, slot == .main, shortcut != .f5, !active {
+                Button { change(.main, to: .f5) } label: { Image(systemName: "arrow.counterclockwise") }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+                    .help("Reset to \(DictationShortcut.f5.displayName)")
+                    .accessibilityLabel("Reset to \(DictationShortcut.f5.spokenName)")
+            } else if mode == .cancel, slot == .main, model.settings.cancelShortcut != nil, !active {
+                Button { change(slot, to: nil) } label: { Image(systemName: "xmark.circle.fill") }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+                    .help("Reset the cancel shortcut to Esc")
+                    .accessibilityLabel("Reset cancel shortcut to Esc")
+            } else if case .extra = slot, !active {
+                Button { change(slot, to: nil) } label: { Image(systemName: "xmark.circle.fill") }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+                    .help("Remove this shortcut")
+                    .accessibilityLabel("Remove shortcut")
+            }
+        }
+    }
+
+    private var addRow: some View {
+        let active = capturing == .newExtra
+        return Button {
+            if active { stop() } else { start(.newExtra) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                Text(active ? (held.isEmpty ? "Type shortcut…" : held.symbols + " …") : "Add another")
+            }
+            .font(.body)
+            .foregroundStyle(active ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .background(Color.primary.opacity(active ? 0.06 : 0), in: .rect(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(active ? Color.accentColor : Color.primary.opacity(0.18),
+                              style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+        )
+        .accessibilityLabel(active ? "Waiting for a shortcut" : "Add another shortcut")
+        .accessibilityHint(mode == .dictation
+            ? "Click, then press a shortcut, or press and release a modifier such as Option."
+            : "Click, then hold Control, Option or Command and press a key, or press an F-key.")
+    }
+
+    private func label(_ shortcut: DictationShortcut?, active: Bool) -> String {
+        if active { return held.isEmpty ? "Type shortcut…" : held.symbols + " …" }
+        return shortcut?.displayName ?? "Add Shortcut…"
+    }
+
+    private func change(_ slot: Target, to shortcut: DictationShortcut?) {
+        switch slot {
+        case .main:
+            if mode == .dictation {
+                if let shortcut { model.changeShortcut(shortcut) }
+            } else {
+                model.changeCancelShortcut(shortcut)
+            }
+        case .extra(let index):
+            if mode == .dictation {
+                model.changeExtraShortcut(at: index, to: shortcut)
+            } else {
+                model.changeExtraCancelShortcut(at: index, to: shortcut)
+            }
+        case .newExtra:
+            if let shortcut {
+                if mode == .dictation {
+                    model.changeExtraShortcut(at: model.settings.extraShortcuts.count, to: shortcut)
+                } else {
+                    model.changeExtraCancelShortcut(at: model.settings.extraCancelShortcuts.count, to: shortcut)
+                }
+            }
+        }
+    }
+
+    private func start(_ slot: Target) {
+        stop()
+        target = slot
+        held = []
+        modifierCandidate = nil
+        feedback = nil
+        model.suspendShortcut()
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
+            MainActor.assumeIsolated { capture(event) }
+            return nil
+        }
+    }
+
+    private func stop() {
+        guard let monitor else { return }
+        NSEvent.removeMonitor(monitor)
+        self.monitor = nil
+        modifierCandidate = nil
+        target = nil
+        model.registerShortcut()
+    }
+
+    private func capture(_ event: NSEvent) {
+        let flags = event.modifierFlags
+        var modifiers = ShortcutModifiers(ShortcutRecorder.modifierFlags.filter { flags.contains($0.flag) }.map(\.modifier))
+        guard event.type == .keyDown else {
+            if flags.contains(.function) { modifiers.insert(.function) }
+            return modifiersChanged(to: modifiers, keyCode: Int(event.keyCode))
+        }
+        modifierCandidate = nil
+        if Int(event.keyCode) == kVK_Escape, modifiers.isEmpty { return stop() }
+        let key = ShortcutRecorder.keyNames[Int(event.keyCode)] ?? event.characters(byApplyingModifiers: [])?.uppercased() ?? ""
+        guard let shortcut = DictationShortcut(keyCode: UInt32(event.keyCode), modifiers: modifiers, key: key) else {
+            let pressed = modifiers.isEmpty ? key : modifiers.symbols + " " + key
+            feedback = key.isEmpty ? "That key can’t be a shortcut. Try another."
+                                   : "\(pressed) is for typing, so it can’t be a shortcut. Hold ⌃, ⌥ or ⌘ with it."
+            return NSSound.beep()
+        }
+        if let target { change(target, to: shortcut) }
+        stop()
+    }
+
+    private func modifiersChanged(to modifiers: ShortcutModifiers, keyCode: Int) {
+        if let candidate = modifierCandidate, candidate.keyCode == UInt32(keyCode), modifiers.isEmpty {
+            if let target { change(target, to: candidate) }
+            return stop()
+        }
+        modifierCandidate = nil
+        if held.isEmpty, !modifiers.isEmpty {
+            feedback = nil
+            if modifiers == DictationShortcut.modifier(for: UInt32(keyCode)), let key = ShortcutRecorder.keyNames[keyCode] {
+                modifierCandidate = DictationShortcut(keyCode: UInt32(keyCode), modifiers: [], key: key)
+            }
+        } else if !modifiers.isSuperset(of: held), feedback == nil {
+            feedback = "Press and release one modifier alone, or hold the modifiers and press another key."
+        }
+        held = modifiers
+    }
+}
+
 private struct ShortcutRecorder: View {
     enum Kind: Equatable {
         case dictation, extra(Int), cancel, extraCancel(Int), selectedText
@@ -457,15 +722,15 @@ private struct ShortcutRecorder: View {
     var body: some View {
         SettingRow(title, caption: caption) {
             HStack(spacing: 6) {
-                if kind == .dictation, shortcut != .optionSpace, !isCapturing {
-                    Button("Reset to \(DictationShortcut.optionSpace.spokenName)", systemImage: "arrow.counterclockwise") {
+                if kind == .dictation, shortcut != .f5, !isCapturing {
+                    Button("Reset to \(DictationShortcut.f5.spokenName)", systemImage: "arrow.counterclockwise") {
                         stop()
-                        model.changeShortcut(.optionSpace)
+                        model.changeShortcut(.f5)
                     }
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
-                    .help("Reset to \(DictationShortcut.optionSpace.displayName)")
+                    .help("Reset to \(DictationShortcut.f5.displayName)")
                     .transition(.opacity)
                 } else if canClear, !isCapturing {
                     Button("Clear", systemImage: "xmark.circle") { change(nil) }
@@ -598,11 +863,11 @@ private struct ShortcutRecorder: View {
         held = modifiers
     }
 
-    private static let modifierFlags: [(flag: NSEvent.ModifierFlags, modifier: ShortcutModifiers)] = [
+    fileprivate static let modifierFlags: [(flag: NSEvent.ModifierFlags, modifier: ShortcutModifiers)] = [
         (.control, .control), (.option, .option), (.shift, .shift), (.command, .command)
     ]
 
-    private static let keyNames: [Int: String] = [
+    fileprivate static let keyNames: [Int: String] = [
         kVK_Control: "Left Control", kVK_RightControl: "Right Control", kVK_Option: "Left Option", kVK_RightOption: "Right Option",
         kVK_Shift: "Left Shift", kVK_RightShift: "Right Shift", kVK_Command: "Left Command", kVK_RightCommand: "Right Command",
         kVK_Function: "Fn", kVK_Space: "Space", kVK_Return: "Return", kVK_Tab: "Tab", kVK_Delete: "Delete", kVK_ForwardDelete: "Forward Delete",
@@ -635,20 +900,24 @@ struct MicrophonePicker<Label: View>: View {
 
 struct SettingsSection<Content: View, Footer: View>: View {
     let title: String
+    let accessory: AnyView?
     @ViewBuilder let content: Content
     @ViewBuilder let footer: Footer
 
-    init(_ title: String, @ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
+    init(_ title: String, accessory: AnyView? = nil, @ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
         self.title = title
+        self.accessory = accessory
         self.content = content()
         self.footer = footer()
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader(title)
+            SectionHeader(title: title) {
+                if let accessory { accessory }
+            }
             Card(padding: 0) {
-                VStack(spacing: 0) { content }
+                VStack(alignment: .leading, spacing: 0) { content }
             }
             footer
                 .font(.callout)
@@ -660,8 +929,8 @@ struct SettingsSection<Content: View, Footer: View>: View {
 }
 
 extension SettingsSection where Footer == EmptyView {
-    init(_ title: String, @ViewBuilder content: () -> Content) {
-        self.init(title, content: content) { EmptyView() }
+    init(_ title: String, accessory: AnyView? = nil, @ViewBuilder content: () -> Content) {
+        self.init(title, accessory: accessory, content: content) { EmptyView() }
     }
 }
 

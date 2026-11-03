@@ -30,6 +30,8 @@ public struct DictationShortcut: Codable, Equatable, Sendable {
     public let key: String
 
     public static let optionSpace = DictationShortcut(validKeyCode: 49, modifiers: .option, key: "Space")
+    /// The hardware microphone key reports F5 once `MicKeyRemap` points it here.
+    public static let f5 = DictationShortcut(validKeyCode: UInt32(kVK_F5), modifiers: [], key: "F5")
     /// The default cancel shortcut; Esc also cancels under the modifiers a dictation is held with.
     public static let escape = DictationShortcut(validKeyCode: UInt32(kVK_Escape), modifiers: [], key: "Esc")
     private static let functionKeyCodes = Set([kVK_F1, kVK_F2, kVK_F3, kVK_F4, kVK_F5, kVK_F6, kVK_F7, kVK_F8, kVK_F9, kVK_F10,

@@ -11,15 +11,26 @@ struct ModelsView: View {
     @State private var forgetFailure: String?
     @State private var preparingSubscription = false
     @State private var subscriptionSignedIn = false
+    @State private var showInstalledOnly = false
 
     var body: some View {
         Form {
             Section {
-                ForEach(SpeechModel.catalog) { speechModel in
+                ForEach(visibleCatalog) { speechModel in
                     modelRow(speechModel)
                 }
+                if visibleCatalog.isEmpty {
+                    Text("No models are downloaded yet.")
+                        .foregroundStyle(.secondary)
+                }
             } header: {
-                Text("On this Mac")
+                HStack {
+                    Text("On this Mac")
+                    Spacer()
+                    SectionOptionsMenu("Model options") {
+                        Toggle("Downloaded only", isOn: $showInstalledOnly)
+                    }
+                }
             } footer: {
                 Label("These models process audio on your Mac. Parakeet and Whisper need an internet connection only for installation. Parakeet sizes include the 100 MB phrase booster, which downloads once and is shared.", systemImage: "internaldrive")
                     .foregroundStyle(.secondary)
@@ -165,6 +176,10 @@ struct ModelsView: View {
         .alert("Couldn’t complete action", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
             Button("OK") { error = nil }
         } message: { Text(error ?? "") }
+    }
+
+    private var visibleCatalog: [SpeechModel] {
+        showInstalledOnly ? SpeechModel.catalog.filter(model.isModelInstalled) : SpeechModel.catalog
     }
 
     @ViewBuilder private var builtInModelRow: some View {

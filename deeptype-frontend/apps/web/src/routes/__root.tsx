@@ -15,9 +15,9 @@ import "../index.css";
 
 export interface RouterAppContext {}
 
-const TITLE = "DeepType: local dictation for macOS";
+const TITLE = "DeepType — dictation that stays on your Mac";
 const DESCRIPTION =
-  "Hold a shortcut, speak, and DeepType types into the app you were using. Speech stays on your Mac. Free and open source.";
+  "Speak into any Mac app and watch clean text appear. DeepType runs its speech models on your Mac, with no account and no subscription. Free.";
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
@@ -26,7 +26,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     meta: [
       { title: TITLE },
       { name: "description", content: DESCRIPTION },
-      { name: "theme-color", content: "#ffffff" },
+      { name: "theme-color", content: "#f4f1e9" },
       { property: "og:type", content: "website" },
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
@@ -38,7 +38,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       {
         property: "og:image:alt",
         content:
-          "DeepType. Speak it messy. Send it clean. Open source dictation for Mac, with speech that stays on your Mac.",
+          "DeepType. Say it, it is written. Local dictation for macOS, with speech that stays on your Mac.",
       },
       {
         name: "twitter:image",
@@ -62,7 +62,7 @@ function RootComponent() {
       >
         Skip to content
       </a>
-      <div className="flex min-h-svh flex-col bg-white text-zinc-900 antialiased">
+      <div className="flex min-h-svh flex-col bg-paper text-ink antialiased">
         <Header />
         <main id="main" className="flex-1">
           <Outlet />

@@ -7,7 +7,14 @@ struct ModesSection: View {
     @State private var editing: WritingMode?
 
     var body: some View {
-        SettingsSection("Modes") {
+        SettingsSection("Modes", accessory: AnyView(
+            Button("Add Mode", systemImage: "plus") { editing = WritingMode() }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help("Add a mode")
+                .accessibilityLabel("Add a mode")
+        )) {
             ForEach(model.settings.modes) { mode in
                 SettingRow(mode.name.isEmpty ? "Untitled mode" : mode.name, caption: summary(mode)) {
                     Button("Edit…") { editing = mode }
@@ -17,12 +24,14 @@ struct ModesSection: View {
                 }
                 RowDivider()
             }
-            HStack {
-                Button("Add Mode…", systemImage: "plus") { editing = WritingMode() }
-                Spacer()
+            if model.settings.modes.isEmpty {
+                HStack {
+                    Button("Add Mode…", systemImage: "plus") { editing = WritingMode() }
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 11)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 11)
         } footer: {
             Text("A mode changes cleanup and tone in the apps and websites it lists, or when you start or end a dictation with its trigger word. A trigger word wins over a website, and a website wins over an app. Websites are detected through Accessibility in supported browsers, and the address is used only on this Mac.")
         }
@@ -94,7 +103,7 @@ private struct WritingModeEditor: View {
 
                 Section {
                     entries(\.websites)
-                    entryField("Website", text: $website, prompt: "github.com or mail.google.com/mail", keyPath: \.websites)
+                    entryField("Website", text: $website, prompt: "mail.google.com/mail", keyPath: \.websites)
                 } header: {
                     Text("Websites")
                 } footer: {

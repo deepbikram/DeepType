@@ -129,10 +129,9 @@ export default function HeroDemo() {
           </div>
         </DemoWindow>
       </div>
-      <figcaption className="mt-8 text-center text-xs text-zinc-500">
-        Illustration, not a benchmark. Simulated at {TYPING_WPM} wpm typing and{" "}
-        {SPEAKING_WPM} wpm speaking with a Parakeet model, with time for
-        transcription.
+      <figcaption className="mt-8 text-center text-xs text-ink/45">
+        An illustration, not a benchmark. 40 wpm typing against 150 wpm
+        speaking, with time for transcription.
       </figcaption>
     </figure>
   );

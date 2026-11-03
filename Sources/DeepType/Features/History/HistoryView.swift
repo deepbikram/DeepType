@@ -5,30 +5,52 @@ struct HistoryView: View {
     @Bindable var model: AppModel
     @State private var query = ""
     @State private var transcriptToDelete: Transcript?
+    @State private var sortAscending = false
 
     private var filteredHistory: [Transcript] {
         query.isEmpty ? model.history : model.history.filter { $0.text.localizedStandardContains(query) }
     }
 
+    private var orderedHistory: [Transcript] {
+        filteredHistory.sorted { sortAscending ? $0.createdAt < $1.createdAt : $0.createdAt > $1.createdAt }
+    }
+
+    private var dayGroups: [(day: Date, items: [Transcript])] {
+        var order: [Date] = []
+        var groups: [Date: [Transcript]] = [:]
+        for transcript in orderedHistory {
+            let day = Calendar.current.startOfDay(for: transcript.createdAt)
+            if groups[day] == nil { order.append(day) }
+            groups[day, default: []].append(transcript)
+        }
+        return order.map { ($0, groups[$0] ?? []) }
+    }
+
     var body: some View {
         Form {
-            if !filteredHistory.isEmpty {
-                Section {
-                    ForEach(filteredHistory) { transcript in
-                        TranscriptRow(
-                            transcript: transcript,
-                            onCopy: { model.copyTranscript(transcript) },
-                            onDelete: { transcriptToDelete = transcript },
-                            onEdit: { model.updateTranscript(transcript, text: $0) },
-                            onRestore: { model.restoreOriginal(transcript) },
-                            expanded: true
-                        )
-                    }
-                } header: {
-                    Text("^[\(filteredHistory.count) dictation](inflect: true)")
-                } footer: {
-                    if model.settings.learnCorrections {
-                        Text("Fix a misheard word with the pencil and DeepType adds it to Vocabulary, so it is spelled right next time.")
+            if !orderedHistory.isEmpty {
+                ForEach(Array(dayGroups.enumerated()), id: \.element.day) { index, group in
+                    Section {
+                        ForEach(group.items) { transcript in
+                            TranscriptRow(
+                                transcript: transcript,
+                                onCopy: { model.copyTranscript(transcript) },
+                                onDelete: { transcriptToDelete = transcript },
+                                onEdit: { model.updateTranscript(transcript, text: $0) },
+                                onRestore: { model.restoreOriginal(transcript) },
+                                expanded: true
+                            )
+                        }
+                    } header: {
+                        HStack {
+                            Text(group.day, format: .dateTime.weekday(.wide).month(.abbreviated).day().year())
+                            Spacer()
+                            SectionBadge(text: group.items.count == 1 ? "1 dictation" : "\(group.items.count) dictations")
+                        }
+                    } footer: {
+                        if index == 0 && model.settings.learnCorrections {
+                            Text("Fix a misheard word with the pencil and DeepType adds it to Vocabulary, so it is spelled right next time.")
+                        }
                     }
                 }
             }
@@ -45,6 +67,23 @@ struct HistoryView: View {
                 } else {
                     ContentUnavailableView.search(text: query)
                 }
+            }
+        }
+        .toolbar {
+            ToolbarItem {
+                Menu {
+                    Picker("Order", selection: $sortAscending) {
+                        Text("Newest first").tag(false)
+                        Text("Oldest first").tag(true)
+                    }
+                    .pickerStyle(.inline)
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .help("Sort dictations")
+                .accessibilityLabel("Sort dictations")
             }
         }
         .searchable(text: $query, prompt: "Search dictations")

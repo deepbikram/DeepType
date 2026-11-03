@@ -55,8 +55,7 @@ export const Route = createFileRoute("/privacy")({
       <h2>This website</h2>
       <p>
         The website does not request microphone access or upload speech. Hosting
-        providers process network requests to serve the site. Following a
-        download, GitHub or other external link takes you to that service and
+        providers process network requests to serve the site.         Following a download or other external link takes you to that service and
         its privacy practices.
       </p>
       <h2>Contact</h2>

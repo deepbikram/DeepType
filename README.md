@@ -4,11 +4,11 @@
 
 # DeepType
 
-**Free, open-source voice dictation for macOS.** Hold **⌥ Space**, speak, release, and the text lands in whatever app you were typing in.
+**Free voice dictation for macOS.** Hold **⌥ Space**, speak, release, and the text lands in whatever app you were typing in.
 
-DeepType is a private, offline speech-to-text app and an open-source alternative to Wispr Flow. It transcribes on your Mac with Whisper, NVIDIA Parakeet or Apple's on-device speech recognition, so your voice never leaves your computer unless you explicitly select an API connection or Codex subscription transcription.
+DeepType is a private, offline speech-to-text app and a free alternative to Wispr Flow. It transcribes on your Mac with Whisper, NVIDIA Parakeet or Apple's on-device speech recognition, so your voice never leaves your computer unless you explicitly select an API connection or Codex subscription transcription.
 
-[Download the latest release](https://github.com/opennookorg/deeptype/releases/latest) · [Website](https://deeptype.com) · [Changelog](CHANGELOG.md)
+[Download for Mac](https://deeptype.com) · [Changelog](CHANGELOG.md)
 
 [![Buy me a coffee](https://shieldcn.dev/badge/Buy%20me%20a%20coffee-Support-FFDD00.svg?logo=buymeacoffee&variant=branded)](https://buymeacoffee.com/deepbikram)
 
@@ -35,7 +35,7 @@ DeepType is a private, offline speech-to-text app and an open-source alternative
 
 ## Getting started
 
-1. Download the DMG from [Releases](https://github.com/opennookorg/deeptype/releases/latest) and drag DeepType to Applications.
+1. Download the DMG from [deeptype.com](https://deeptype.com) and drag DeepType to Applications.
 2. Open it and follow the welcome guide.
 3. Pick a model in **Models**. Apple on-device needs no download; Parakeet and Whisper download once, then work offline.
 4. Grant **Microphone** access, and **Accessibility** access so DeepType can paste for you.
@@ -75,19 +75,13 @@ For optional subscription transcription, see [Codex subscription setup](docs/cod
 
 ## Troubleshooting
 
-- **Paste stopped working after an update or rebuild**: remove and re-add DeepType in System Settings → Privacy & Security → Accessibility.
+- **Paste stopped working after an update or rebuild**: release builds keep permissions across updates (same Developer ID + bundle ID). Local rebuilds are ad-hoc signed, which macOS treats as a new app each time — remove and re-add DeepType in System Settings → Privacy & Security → Accessibility, or set `CODESIGN_IDENTITY` to a persistent identity.
 - **Apple on-device model unavailable**: your language or OS speech assets may not support it. Install Parakeet or Whisper instead.
 - **First transcription is slow**: large models take time to load the first time.
 
 ## Contributing
 
 Build instructions, project layout and guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Star history
-
-<p align="center">
-  <a href="https://www.star-history.com/#opennookorg/deeptype&Date"><picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=opennookorg/deeptype&type=Date&theme=dark" /><img alt="Star history of opennookorg/deeptype" src="https://api.star-history.com/svg?repos=opennookorg/deeptype&type=Date" /></picture></a>
-</p>
 
 ## License
 

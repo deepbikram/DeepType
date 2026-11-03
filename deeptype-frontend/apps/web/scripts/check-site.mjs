@@ -23,7 +23,6 @@ try {
       "/blog",
       ...articles.map((item) => `/blog/${item.slug}`),
       ...comparisons.map((item) => `/blog/${item.slug}`),
-      "/changelog",
       "/privacy",
       "/terms",
     ].sort(),
@@ -134,66 +133,6 @@ try {
     "Download count rejects a malformed count",
   );
 
-  const { GitHubStars } = await vite.ssrLoadModule(
-    "/src/components/github-stars.tsx",
-  );
-  for (const [count, compact, full, locales] of [
-    [0, "0", "0 stars", "en-US"],
-    [1, "1", "1 star", "en-US"],
-    [1200, "1.2k", "1,200 stars", "en-US"],
-    [2050, "2.1k", "2,050 stars", "en-US"],
-    [1200000, "1.2m", "1,200,000 stars", "en-US"],
-    [2050, "2,1\u00a0mil", "2050 stars", "es-ES"],
-  ]) {
-    const html = renderToStaticMarkup(
-      createElement(GitHubStars, {
-        repo: "opennookorg/deeptype",
-        stargazersCount: count,
-        locales,
-      }),
-    );
-    assert.ok(
-      html.includes(`>${compact}</span>`),
-      `${count}: compact ${locales} count`,
-    );
-    assert.ok(
-      html.includes(
-        `aria-label="Star opennookorg/deeptype on GitHub (${full})"`,
-      ),
-      `${count}: accessible full count`,
-    );
-    assert.ok(
-      html.includes('href="https://github.com/opennookorg/deeptype"'),
-    );
-    assert.ok(
-      html.includes('target="_blank"') && html.includes('rel="noopener"'),
-    );
-    assert.ok(
-      html.includes('role="link"'),
-      "The GitHub action keeps link semantics",
-    );
-  }
-  const { default: StarOnGithub } = await vite.ssrLoadModule(
-    "/src/components/star-on-github.tsx",
-  );
-  const fallback = renderToStaticMarkup(
-    createElement(StarOnGithub, { compact: true }),
-  );
-  const loaded = renderToStaticMarkup(
-    createElement(GitHubStars, {
-      repo: "opennookorg/deeptype",
-      stargazersCount: 12,
-    }),
-  );
-  const mark = (markup) => markup.match(/<svg[\s\S]*?<\/svg>/)?.[0];
-  assert.ok(
-    mark(fallback) && mark(fallback) === mark(loaded),
-    "Loading shows the same GitHub mark as the loaded count",
-  );
-  assert.ok(
-    fallback.includes('aria-label="Star opennookorg/deeptype on GitHub"'),
-    "Loading keeps a usable GitHub link without a fabricated count",
-  );
   const homepage = await readFile("dist/index.html", "utf8");
   const { default: Testimonials } = await vite.ssrLoadModule(
     "/src/components/ui/cards.tsx",
@@ -225,20 +164,12 @@ try {
   const { default: TestimonialsDemo } = await vite.ssrLoadModule("/src/components/ui/demo.tsx");
   const demo = renderToStaticMarkup(createElement(TestimonialsDemo));
   assert.ok(demo.includes("not real endorsements") && !demo.includes("<a "));
-  assert.ok(
-    homepage.includes('id="testimonials"') &&
-      homepage.includes('href="https://news.ycombinator.com/item?id=') &&
-      homepage.includes('href="https://x.com/'),
-    "The homepage shows testimonials linked to their Hacker News and X sources",
-  );
-  assert.ok(!homepage.includes("Sample author"), "The homepage never imports fictional endorsements");
   const closing = homepage.match(/<section\b[^>]*aria-labelledby="start-title"[^>]*>([\s\S]*?)<\/section>/)?.[1] ?? "";
-  const highlightAt = closing.indexOf("without a single error!</mark>");
   assert.ok(
-    highlightAt > -1 &&
-      highlightAt < closing.indexOf("DeepType-arm64.dmg") &&
-      closing.includes('href="https://news.ycombinator.com/item?id=50046250"'),
-    "The closing download CTA leads with a highlighted, sourced launch quote",
+    closing.includes("starts with your voice") &&
+      closing.includes("DeepType-arm64.dmg") &&
+      closing.includes("DeepType-x86_64.dmg"),
+    "The closing CTA offers both downloads under its heading",
   );
   const menuButton = homepage.match(
     /<button\b[^>]*aria-controls="navigation-links"[^>]*>/,
@@ -257,11 +188,12 @@ try {
     [
       "https://github.com/opennookorg/deeptype/releases/latest/download/DeepType-arm64.dmg",
       "https://github.com/opennookorg/deeptype/releases/latest/download/DeepType-x86_64.dmg",
+      "#how-it-works",
     ],
-    "The hero offers separate Apple Silicon and Intel downloads",
+    "The hero offers both downloads and a link to how it works",
   );
   console.log(
-    `Passed: ${paths.length} static pages, metadata, internal links, CTAs, ${articles.length + comparisons.length} blog posts, redirects, 404, OG image, GitHub stars, download count and testimonials.`,
+    `Passed: ${paths.length} static pages, metadata, internal links, CTAs, ${articles.length + comparisons.length} blog posts, redirects, 404, OG image, download count and testimonials.`,
   );
 } finally {
   await vite.close();

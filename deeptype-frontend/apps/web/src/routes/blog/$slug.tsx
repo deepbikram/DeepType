@@ -8,8 +8,9 @@ import {
   type Comparison,
   comparisons,
   REVIEWED_ON,
+  REVIEWED_ON_ISO,
 } from "@/lib/comparisons";
-import { pageHead } from "@/lib/seo";
+import { blogPostingJsonLd, comparisonJsonLd, ldJsonScript, pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: ({ params }) => {
@@ -19,8 +20,8 @@ export const Route = createFileRoute("/blog/$slug")({
     if (!comparison) throw notFound();
     return { comparison };
   },
-  head: ({ loaderData }) =>
-    loaderData?.article
+  head: ({ loaderData }) => {
+    const base = loaderData?.article
       ? pageHead(
           `${loaderData.article.title} | DeepType`,
           loaderData.article.description,
@@ -37,7 +38,39 @@ export const Route = createFileRoute("/blog/$slug")({
               { title: "Post not found | DeepType" },
               { name: "robots", content: "noindex" },
             ],
-          },
+          };
+    if (loaderData?.article)
+      return {
+        ...base,
+        scripts: [
+          ldJsonScript(
+            blogPostingJsonLd({
+              title: loaderData.article.title,
+              description: loaderData.article.description,
+              path: `/blog/${loaderData.article.slug}`,
+              date: loaderData.article.date,
+              dateModified: loaderData.article.dateModified,
+            }),
+          ),
+        ],
+      };
+    if (loaderData?.comparison)
+      return {
+        ...base,
+        scripts: [
+          ldJsonScript(
+            comparisonJsonLd({
+              title: `DeepType vs ${loaderData.comparison.name} | Mac dictation compared`,
+              description: loaderData.comparison.intro,
+              path: `/blog/${loaderData.comparison.slug}`,
+              date: REVIEWED_ON_ISO,
+              competitor: loaderData.comparison.name,
+            }),
+          ),
+        ],
+      };
+    return base;
+  },
   component: BlogPost,
 });
 
@@ -56,30 +89,32 @@ function ComparisonPage({ item }: { item: Comparison }) {
       <article className="page-shell py-16 sm:py-20">
         <Link
           to="/blog"
-          className="inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
+          className="inline-flex items-center gap-2 text-sm text-ink/65 hover:text-ink"
         >
           <ArrowLeftIcon /> All posts
         </Link>
         <p className="eyebrow mt-12">{item.category}</p>
-        <h1 className="mt-4 max-w-[880px] text-4xl tracking-tight sm:text-6xl">
+        <h1 className="mt-4 max-w-[880px] font-serif text-4xl leading-[1.02] tracking-tight sm:text-6xl">
           DeepType
           <br />
-          <span className="text-zinc-500">vs {item.name}</span>
+          <span className="text-ink/50">vs {item.name}</span>
         </h1>
-        <p className="mt-6 max-w-[680px] text-lg text-zinc-600">{item.intro}</p>
+        <p className="mt-6 max-w-[680px] text-lg text-pretty text-ink/65">
+          {item.intro}
+        </p>
         <div className="mt-8">
           <DownloadCTA />
         </div>
-        <p className="mt-6 text-sm text-zinc-500">
+        <p className="mt-6 text-sm text-ink/50">
           Reviewed {REVIEWED_ON} · By the DeepType team
         </p>
 
         <section className="mt-16" aria-labelledby="comparison-title">
-          <h2 id="comparison-title" className="text-2xl tracking-tight">
-            At a glance
+          <h2 id="comparison-title" className="font-serif text-2xl tracking-tight">
+            Side by side
           </h2>
           <div
-            className="mt-6 overflow-x-auto rounded-xl border border-zinc-200"
+            className="mt-6 overflow-x-auto rounded-xl border border-ink/10"
             role="region"
             aria-label={`Feature comparison with ${item.name}`}
             tabIndex={0}
@@ -90,8 +125,8 @@ function ComparisonPage({ item }: { item: Comparison }) {
                 account, price model and cleanup
               </caption>
               <thead>
-                <tr className="bg-zinc-50">
-                  <th scope="col" className="p-6 font-medium text-zinc-500">
+                <tr className="bg-ink/[0.03]">
+                  <th scope="col" className="p-6 font-medium text-ink/50">
                     What matters
                   </th>
                   <th
@@ -110,14 +145,14 @@ function ComparisonPage({ item }: { item: Comparison }) {
               </thead>
               <tbody>
                 {DEEPTYPE_FACTS.map(([label, value], index) => (
-                  <tr key={label} className="border-t border-zinc-200">
+                  <tr key={label} className="border-t border-ink/10">
                     <th scope="row" className="p-6 align-top font-medium">
                       {label}
                     </th>
-                    <td className="bg-paper/40 p-6 align-top text-zinc-700">
+                    <td className="bg-paper/40 p-6 align-top text-ink/70">
                       {value}
                     </td>
-                    <td className="p-6 align-top text-zinc-600">
+                    <td className="p-6 align-top text-ink/65">
                       {item.facts[index]}
                     </td>
                   </tr>
@@ -125,7 +160,7 @@ function ComparisonPage({ item }: { item: Comparison }) {
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-xs text-zinc-500 sm:hidden">
+          <p className="mt-3 text-xs text-ink/50 sm:hidden">
             Swipe the table to see both apps.
           </p>
         </section>
@@ -135,43 +170,43 @@ function ComparisonPage({ item }: { item: Comparison }) {
           aria-label="Which app fits your workflow"
         >
           <div>
-            <p className="eyebrow">Choose DeepType if</p>
-            <h2 className="mt-4 text-2xl tracking-tight">
-              Local dictation is the priority.
+            <p className="eyebrow">Pick DeepType if</p>
+            <h2 className="mt-4 font-serif text-2xl tracking-tight">
+              You want your voice to stay on your Mac.
             </h2>
-            <p className="mt-4 text-base text-zinc-600">{item.betterFor}</p>
+            <p className="mt-4 text-base text-ink/65">{item.betterFor}</p>
           </div>
           <div>
-            <p className="eyebrow">Consider {item.name} if</p>
-            <h2 className="mt-4 text-2xl tracking-tight">
+            <p className="eyebrow">Pick {item.name} if</p>
+            <h2 className="mt-4 font-serif text-2xl tracking-tight">
               Its workflow fits you better.
             </h2>
-            <p className="mt-4 text-base text-zinc-600">
+            <p className="mt-4 text-base text-ink/65">
               {item.alternativeFor}
             </p>
           </div>
         </section>
         <aside className="rounded-xl bg-paper p-8">
-          <h2 className="text-lg font-semibold">Our take</h2>
-          <p className="mt-3 max-w-[680px] text-base text-zinc-700">
+          <h2 className="font-serif text-lg tracking-tight">Our take</h2>
+          <p className="mt-3 max-w-[680px] text-base text-ink/70">
             {item.takeaway}
           </p>
         </aside>
         <section className="mt-12" aria-labelledby="sources-title">
-          <h2 id="sources-title" className="text-lg font-semibold">
+          <h2 id="sources-title" className="font-serif text-lg tracking-tight">
             Sources and scope
           </h2>
-          <p className="mt-3 max-w-[680px] text-sm text-zinc-600">
-            Based on the official pages below, reviewed {REVIEWED_ON}. This
-            comparison is published by DeepType and is not an independent
-            benchmark. We have not measured relative accuracy or speed. Check
-            each provider for current plans and availability.
+          <p className="mt-3 max-w-[680px] text-sm text-ink/65">
+            Based on the official pages below, reviewed {REVIEWED_ON}. DeepType
+            publishes this comparison, so it is not an independent benchmark. We
+            have not measured relative accuracy or speed. Check each provider
+            for current plans and availability.
           </p>
           <ul className="mt-4 space-y-3">
             {item.sources.map((source) => (
               <li key={source.url}>
                 <a
-                  className="text-sm underline underline-offset-4 hover:text-zinc-600"
+                  className="text-sm underline underline-offset-4 hover:text-ink/65"
                   href={source.url}
                 >
                   {source.label} ↗
@@ -181,10 +216,29 @@ function ComparisonPage({ item }: { item: Comparison }) {
           </ul>
         </section>
         <nav
-          className="mt-16 border-t border-zinc-200 pt-8"
+          className="mt-16 border-t border-ink/10 pt-8"
+          aria-label="Related reading"
+        >
+          <h2 className="font-serif text-lg tracking-tight">Related reading</h2>
+          <div className="mt-4 flex flex-col gap-4">
+            {articles.slice(0, 3).map((post) => (
+              <Link
+                key={post.slug}
+                to="/blog/$slug"
+                params={{ slug: post.slug }}
+                className="inline-flex items-center gap-2 text-sm text-ink/65 hover:text-ink"
+              >
+                {post.title}
+                <ArrowRightIcon />
+              </Link>
+            ))}
+          </div>
+        </nav>
+        <nav
+          className="mt-8 border-t border-ink/10 pt-8"
           aria-label="Other comparisons"
         >
-          <h2 className="text-lg font-semibold">More comparisons</h2>
+          <h2 className="font-serif text-lg tracking-tight">More comparisons</h2>
           <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
             {comparisons
               .filter((other) => other.slug !== item.slug)
@@ -193,7 +247,7 @@ function ComparisonPage({ item }: { item: Comparison }) {
                   key={other.slug}
                   to="/blog/$slug"
                   params={{ slug: other.slug }}
-                  className="inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
+                  className="inline-flex items-center gap-2 text-sm text-ink/65 hover:text-ink"
                 >
                   {other.name}
                   <ArrowRightIcon />

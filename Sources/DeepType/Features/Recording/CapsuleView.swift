@@ -440,7 +440,7 @@ struct CapsuleView: View {
 
     private var dictationPill: some View {
         HStack(spacing: 4) {
-            if !model.isHeldSession {
+            if !model.isHeldSession, model.settings.showCapsuleCancel {
                 Button(action: model.cancelRecording) {
                     Image(systemName: "xmark")
                         .frame(width: 18, height: 18)
@@ -469,7 +469,7 @@ struct CapsuleView: View {
                     .accessibilityLabel("Sends after pasting")
                     .transition(.opacity)
             }
-            if !model.isHeldSession {
+            if !model.isHeldSession, model.settings.showCapsuleFinish {
                 Button(action: model.toggleRecording) {
                     Image(systemName: "checkmark")
                         .foregroundStyle(.black.opacity(isRecording ? 1 : 0.45))
@@ -487,12 +487,21 @@ struct CapsuleView: View {
         .foregroundStyle(.white)
         .buttonStyle(.plain)
         .padding(.horizontal, 4)
-        .frame(width: (model.isHeldSession ? 96 : 108) + (model.pressesReturn ? 18 : 0), height: 28)
+        .frame(width: pillWidth + (model.pressesReturn ? 18 : 0), height: 28)
         .animation(reduceMotion ? nil : .snappy(duration: 0.2), value: model.pressesReturn)
         .contentShape(Capsule())
         .contextMenu { Button("Cancel dictation", action: model.cancelRecording) }
         .accessibilityActions { Button("Cancel dictation", action: model.cancelRecording) }
         .capsuleRegion(.dictation)
+    }
+
+    /// Fixed pill width; the waveform flexes, so each hidden button gives back its 24pt plus spacing.
+    private var pillWidth: CGFloat {
+        if model.isHeldSession { return 96 }
+        var width: CGFloat = 108
+        if !model.settings.showCapsuleCancel { width -= 28 }
+        if !model.settings.showCapsuleFinish { width -= 28 }
+        return width
     }
 
     private var notetakingPill: some View {

@@ -6,7 +6,6 @@ import {
 } from "@deeptype-frontend/ui/components/dropdown-menu";
 import { track } from "@databuddy/sdk";
 import {
-  ArrowUpRightIcon,
   CaretDownIcon,
   DownloadSimpleIcon,
 } from "@phosphor-icons/react";
@@ -22,14 +21,6 @@ const DOWNLOADS = [
   { href: DOWNLOAD_URL, chip: "Apple Silicon", macs: "M1 or newer" },
   { href: INTEL_DOWNLOAD_URL, chip: "Intel", macs: "Intel-based Macs" },
 ];
-
-const FEATURED_QUOTE = {
-  name: "GodelNumbering",
-  postUrl: "https://news.ycombinator.com/item?id=50046250",
-  before:
-    "Just tried it out as I was looking for something that does this exact thing well (macbook). So far I dictated about 5 different things in different contexts, ",
-  highlight: "it worked without a single error!",
-};
 
 export default function DownloadCTA({
   compact = false,
@@ -52,7 +43,7 @@ export default function DownloadCTA({
         <DropdownMenuContent
           align="end"
           sideOffset={8}
-          className="w-60 rounded-xl bg-white p-1 text-zinc-900 shadow-lg ring-zinc-200"
+          className="w-60 rounded-xl bg-paper p-1 text-ink shadow-lg ring-ink/10"
         >
           {DOWNLOADS.map(({ href, chip, macs }) => (
             <DropdownMenuLinkItem
@@ -60,17 +51,17 @@ export default function DownloadCTA({
               href={href}
               closeOnClick
               onClick={() => track("download_started")}
-              className="cursor-pointer gap-3 rounded-lg px-3 py-2 text-sm focus:bg-zinc-100 focus:text-zinc-900"
+              className="cursor-pointer gap-3 rounded-lg px-3 py-2 text-sm focus:bg-ink/5 focus:text-ink"
             >
               <span className="flex-1">
                 <span className="block font-semibold">{chip}</span>
-                <span className="block text-xs text-zinc-600">{macs}</span>
+                <span className="block text-xs text-ink/60">{macs}</span>
               </span>
-              <DownloadSimpleIcon className="text-zinc-500" />
+              <DownloadSimpleIcon className="text-ink/45" />
             </DropdownMenuLinkItem>
           ))}
           {downloads !== undefined && (
-            <p className="mt-1 border-t border-zinc-100 px-3 pt-2 pb-1.5 text-xs text-zinc-500 tabular-nums">
+            <p className="mt-1 border-t border-ink/10 px-3 pt-2 pb-1.5 text-xs text-ink/45 tabular-nums">
               {COUNT_FORMAT.format(downloads)} downloads so far
             </p>
           )}
@@ -86,14 +77,14 @@ export default function DownloadCTA({
         className="download-cta text-base"
       >
         <AppleLogo className="size-5" />
-        Download for Apple Silicon
+        Download for Mac
       </a>
       <a
         href={INTEL_DOWNLOAD_URL}
         onClick={() => track("download_started")}
-        className="text-sm text-zinc-600 underline underline-offset-4 hover:text-zinc-900"
+        className="download-secondary text-sm text-ink/65 underline underline-offset-4 hover:text-ink"
       >
-        Download for Intel
+        Download the Intel build
       </a>
     </div>
   );
@@ -101,51 +92,24 @@ export default function DownloadCTA({
 
 export function ClosingCTA() {
   return (
-    <section
-      className="bg-paper px-6 py-20 text-center"
-      aria-labelledby="start-title"
-    >
-      <p className="eyebrow">Your next thought, in your own words</p>
+    <section className="scroll-mt-24 border-t border-ink/10 bg-paper px-6 py-24 text-center" aria-labelledby="start-title">
+      <p className="eyebrow">A quieter way to write</p>
       <h2
         id="start-title"
-        className="mx-auto mt-4 max-w-[680px] text-4xl tracking-tight sm:text-5xl"
+        className="mx-auto mt-5 max-w-[680px] font-serif text-4xl leading-[1.05] tracking-tight sm:text-6xl"
       >
-        Give your keyboard a break.
+        Your next sentence
+        <br />
+        starts with your voice.
       </h2>
-      <p className="mx-auto mt-6 max-w-xl text-lg text-zinc-600">
-        Local speech models. The apps you already use. A little more room to
-        think.
+      <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-ink/65">
+        Local models. The apps you already use. Nothing to sign up for.
       </p>
-      <figure className="mx-auto mt-12 max-w-2xl">
-        <figcaption className="flex flex-col items-center">
-          <span className="text-base font-semibold text-zinc-900">
-            {FEATURED_QUOTE.name}
-          </span>
-          <a
-            href={FEATURED_QUOTE.postUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-6 items-center gap-1 text-xs text-zinc-500 hover:text-zinc-900"
-            aria-label={`Read ${FEATURED_QUOTE.name}’s comment on Hacker News (opens in a new tab)`}
-          >
-            on Hacker News
-            <ArrowUpRightIcon className="size-3" aria-hidden="true" />
-          </a>
-        </figcaption>
-        <blockquote className="mt-6 font-serif text-2xl leading-snug text-zinc-800 italic sm:text-3xl">
-          <span className="text-yellow-700">“</span>
-          {FEATURED_QUOTE.before}
-          <mark className="rounded-sm bg-yellow-200/70 box-decoration-clone px-1 text-inherit">
-            {FEATURED_QUOTE.highlight}
-          </mark>
-          <span className="text-yellow-700">”</span>
-        </blockquote>
-      </figure>
       <div className="mt-10">
         <DownloadCTA />
       </div>
-      <p className="mt-4 text-sm text-zinc-600">
-        <DownloadCount className="font-semibold text-zinc-900" />
+      <p className="mt-4 text-sm text-ink/50">
+        <DownloadCount className="font-semibold text-ink" />
         macOS 14+ · Apple Silicon recommended · No account in the app
       </p>
     </section>

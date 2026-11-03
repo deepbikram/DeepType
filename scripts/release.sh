@@ -59,7 +59,12 @@ build_arch() {
     /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $VERSION" "$app_path/Contents/Info.plist"
 
     echo "[$label] Signing..."
-    codesign --deep --force --options runtime --timestamp \
+    # ponytail: sign nested code first, then the app without --deep, so Team ID stays stable and TCC survives updates.
+    while IFS= read -r nested; do
+        codesign --force --options runtime --timestamp \
+            --sign "$SIGNING_IDENTITY" "$nested"
+    done < <(find "$app_path/Contents/Frameworks" "$app_path/Contents/MacOS" -name '*.framework' -o -name '*.bundle' -o -name '*.dylib' 2>/dev/null || true)
+    codesign --force --options runtime --timestamp \
         --sign "$SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS" "$app_path"
     codesign --verify --deep --strict "$app_path"
     echo "[$label] Signature verified."

@@ -129,10 +129,13 @@ private struct NotesHome: View {
     let onCite: (MeetingLine) -> Void
     @State private var query = ""
     @State private var searching = false
+    @State private var filterDays: Int?
+    @State private var filterAttendee: String?
 
     private var meetings: MeetingModel { model.meetings }
     private var filtered: [Meeting] {
-        query.isEmpty ? meetings.meetings : meetings.meetings.filter { $0.matches(query) }
+        let scoped = MeetingFilter(days: filterDays, attendee: filterAttendee).apply(to: meetings.meetings)
+        return query.isEmpty ? scoped : scoped.filter { $0.matches(query) }
     }
 
     var body: some View {
@@ -179,6 +182,42 @@ private struct NotesHome: View {
         }
     }
 
+    private var filterMenu: some View {
+        let attendees = MeetingFilter.attendees(in: meetings.meetings)
+        let active = filterDays != nil || filterAttendee != nil
+        return Menu {
+            Picker("Created", selection: $filterDays) {
+                Text("Any time").tag(Int?.none)
+                Text("Today").tag(Int?.some(1))
+                Text("Last 7 days").tag(Int?.some(7))
+                Text("Last 30 days").tag(Int?.some(30))
+            }
+            .pickerStyle(.inline)
+            if !attendees.isEmpty {
+                Divider()
+                Picker("Attendee", selection: $filterAttendee) {
+                    Text("Anyone").tag(String?.none)
+                    ForEach(attendees, id: \.self) { Text($0).tag(String?.some($0)) }
+                }
+                .pickerStyle(.inline)
+            }
+            if active {
+                Divider()
+                Button("Clear filters") {
+                    filterDays = nil
+                    filterAttendee = nil
+                }
+            }
+        } label: {
+            Image(systemName: active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Filter notes")
+        .accessibilityLabel("Filter notes")
+    }
+
     private var header: some View {
         let capturing = meetings.capturingID != nil
         return HStack(spacing: 14) {
@@ -188,6 +227,7 @@ private struct NotesHome: View {
                 .buttonStyle(.borderless)
                 .help("Search notes")
                 .accessibilityLabel("Search notes")
+            filterMenu
             NotetakerSettings(model: model)
             Button {
                 if capturing { meetings.stop() } else { model.startNotetaker() }

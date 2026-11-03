@@ -14,7 +14,6 @@ export const paths = [
   "/blog",
   ...articles.map((item) => `/blog/${item.slug}`),
   ...comparisons.map((item) => `/blog/${item.slug}`),
-  "/changelog",
   "/privacy",
   "/terms",
 ];

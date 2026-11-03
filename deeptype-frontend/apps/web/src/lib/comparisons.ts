@@ -1,4 +1,5 @@
 export const REVIEWED_ON = "October 8, 2026";
+export const REVIEWED_ON_ISO = "2026-10-08";
 
 export const DEEPTYPE_FACTS = [
   ["Platform", "macOS 14 or later; Apple Silicon recommended"],
@@ -30,23 +31,23 @@ export const comparisons: Comparison[] = [
     slug: "superwhisper",
     name: "Superwhisper",
     category: "Local + cloud",
-    summary: "Local models, cloud options and configurable writing modes.",
+    summary: "Local models, cloud options, and writing modes you configure.",
     intro:
-      "Both apps can transcribe locally. The choice is about how much control you want over models and writing workflows.",
+      "Both apps can transcribe on your Mac. The difference is how much you want to tune models and writing workflows.",
     facts: [
-      "Mac, Windows, iOS and Android; capabilities vary by platform",
-      "Local and cloud models; depends on your selection",
+      "Mac, Windows, iOS and Android; features vary by platform",
+      "Local and cloud models, depending on what you pick",
       "Available with local models on supported hardware",
-      "No account required for the free offline workflow",
+      "No account needed for the free offline workflow",
       "Free tier; subscription and lifetime Pro options",
       "Custom prompts, writing modes, and local or cloud AI models",
     ],
     betterFor:
-      "You want a focused Mac dictation workflow with local transcription, simple cleanup and no cloud provider to configure.",
+      "You want Mac dictation that stays local, with simple cleanup and no cloud provider to set up.",
     alternativeFor:
-      "You want configurable writing modes, optional cloud models or support beyond macOS. Superwhisper has a free tier and paid Pro plans.",
+      "You want configurable writing modes, optional cloud models, or support beyond the Mac. Superwhisper has a free tier and paid Pro plans.",
     takeaway:
-      "Offline is not a unique DeepType advantage here. Compare the workflow, available models and how much text rewriting you actually want.",
+      "Offline use is not unique to DeepType here. Compare the workflow, the models you can use, and how much you want your text rewritten.",
     sources: [
       {
         label: "Superwhisper features and plans",
@@ -66,23 +67,23 @@ export const comparisons: Comparison[] = [
     slug: "wispr-flow",
     name: "Wispr Flow",
     category: "Cloud dictation",
-    summary: "Polished writing across devices, with cloud processing.",
+    summary: "Dictation across devices, with cloud processing.",
     intro:
-      "DeepType keeps speech recognition on your Mac. Wispr Flow focuses on polished dictation across desktop and mobile, with an internet connection.",
+      "DeepType keeps speech recognition on your Mac. Wispr Flow aims at dictation across computers and phones, and needs a connection.",
     facts: [
       "Mac, Windows, iOS and Android",
       "Cloud transcription",
-      "An internet connection is required to start dictation",
-      "Account with free and paid plans",
+      "An internet connection is needed to start dictation",
+      "Account required; free and paid plans",
       "Free tier with usage limits; paid subscriptions",
       "Automatic editing, contextual formatting and a custom dictionary",
     ],
     betterFor:
-      "You need to dictate without sending recordings to a speech service, including when your Mac is offline after model setup.",
+      "You want to dictate without sending recordings to a speech service, including when your Mac is offline after model setup.",
     alternativeFor:
-      "You want one dictation service across computers and phones, automatic writing polish or team administration. Check the free plan limits and paid plans.",
+      "You want one dictation service across computers and phones, automatic polish, or team administration. Check the free plan limits and paid plans.",
     takeaway:
-      "Start with your connectivity and processing requirements. Cloud processing and data retention are separate questions; review Flow’s current privacy settings as well.",
+      "Start with where you work and whether you are online. Cloud processing and data retention are separate questions; read Flow’s current privacy settings as well.",
     sources: [
       { label: "Wispr Flow features", url: "https://wisprflow.ai/" },
       {
@@ -97,23 +98,23 @@ export const comparisons: Comparison[] = [
     name: "Kivi by Sarvam",
     category: "Indian language workflows",
     summary:
-      "Multilingual dictation, remembered corrections and voice editing.",
+      "Many languages, remembered corrections, and editing by voice.",
     intro:
-      "Kivi is Sarvam’s Mac voice app, sometimes searched for as Kiwi. It emphasizes Indian languages and editing by voice. DeepType emphasizes local speech recognition.",
+      "Kivi is Sarvam’s Mac voice app, sometimes searched for as Kiwi. It leans on Indian languages and editing by voice. DeepType leans on local speech recognition.",
     facts: [
       "Mac; macOS 14 or later advertised",
-      "The reviewed product pages do not establish a fully local audio path",
+      "The reviewed product pages do not show a fully local audio path",
       "Not confirmed by the reviewed official documentation",
       "Required, according to Kivi’s privacy policy",
       "Free during alpha; future pricing may change",
       "Remembered corrections, app personas, drafting and voice editing",
     ],
     betterFor:
-      "Your priority is a documented local transcription path with no account. Choose a model that supports your language and test it with your own speech.",
+      "You want a documented local transcription path with no account. Pick a model that covers your language and try it with your own speech.",
     alternativeFor:
-      "You regularly mix English and Indian languages, or want to draft and edit with spoken instructions. Kivi advertises 22+ Indian languages and is free during alpha.",
+      "You mix English and Indian languages, or want to draft and edit by voice. Kivi advertises 22+ Indian languages and is free during alpha.",
     takeaway:
-      "Kivi’s language focus may be a better fit for multilingual Indian workflows. Its public pages do not confirm offline operation, so verify that requirement directly before choosing.",
+      "Kivi’s language focus may suit multilingual Indian workflows better. Its public pages do not confirm offline use, so check that directly before choosing.",
     sources: [
       {
         label: "Kivi product and alpha availability",
@@ -130,23 +131,23 @@ export const comparisons: Comparison[] = [
     slug: "fluidvoice",
     name: "FluidVoice",
     category: "Local + optional cloud AI",
-    summary: "Local speech recognition with optional AI writing enhancement.",
+    summary: "Local speech recognition with optional AI rewriting.",
     intro:
-      "Both apps offer local dictation on Mac. FluidVoice adds a broader writing toolkit, including its Fluid Intelligence enhancement model.",
+      "Both apps dictate locally on a Mac. FluidVoice adds a wider writing toolkit, including its Fluid Intelligence model.",
     facts: [
       "macOS 15 or later; Apple Silicon and Intel paths",
       "Local speech models; optional local or cloud text enhancement",
       "Available with local speech and enhancement models installed",
-      "Free and open source; optional external AI services have their own requirements",
-      "Free and open source; optional external services may charge",
+      "Free; optional external AI services have their own requirements",
+      "Free; optional external services may charge",
       "Fluid Intelligence, app prompts, Write Mode and Command Mode",
     ],
     betterFor:
-      "You use macOS 14 or prefer a smaller dictation workflow built around vocabulary, explicit replacements and local transcript history.",
+      "You use macOS 14, or want a smaller dictation setup built around vocabulary, explicit replacements and local transcript history.",
     alternativeFor:
-      "You want richer writing modes and local AI rewriting, and your Mac meets FluidVoice’s requirements. FluidVoice is also free, so price alone does not distinguish these workflows.",
+      "You want richer writing modes and local AI rewriting, and your Mac meets FluidVoice’s requirements. FluidVoice is also free, so price alone does not separate them.",
     takeaway:
-      "Both support local speech processing. With FluidVoice, check which enhancement provider you enable; optional cloud text processing changes where your transcript goes.",
+      "Both process speech locally. With FluidVoice, check which enhancement provider you turn on; optional cloud text processing changes where your transcript goes.",
     sources: [
       {
         label: "FluidVoice official product page",
@@ -166,9 +167,9 @@ export const comparisons: Comparison[] = [
     slug: "macwhisper",
     name: "MacWhisper",
     category: "Dictation + transcription",
-    summary: "A transcription workspace for files, subtitles and dictation.",
+    summary: "A transcription tool for files, subtitles and dictation.",
     intro:
-      "MacWhisper combines dictation with tools for working through recorded media. DeepType’s dictation flow centers on speaking into the app you already have open.",
+      "MacWhisper adds tools for working through recorded media. DeepType keeps its dictation flow on speaking into the app you already have open.",
     facts: [
       "Mac; a separate iOS and iPad app is also available",
       "Local models, with optional external AI integrations",
@@ -178,11 +179,11 @@ export const comparisons: Comparison[] = [
       "AI prompts, grammar improvement and local or external AI integrations",
     ],
     betterFor:
-      "You mainly dictate messages, notes and prompts into existing apps, with local recognition and a vocabulary you control.",
+      "You mostly dictate messages, notes and prompts into apps you already use, with local recognition and vocabulary you control.",
     alternativeFor:
-      "You need batch file transcription, subtitle exports, speaker recognition or a workspace for reviewing recordings. Feature availability varies between Free and Pro.",
+      "You need batch file transcription, subtitle exports, speaker recognition or a place to review recordings. Features differ between Free and Pro.",
     takeaway:
-      "Compare the job you do most often. A media transcription workspace and a shortcut you use throughout the day solve overlapping but different needs.",
+      "Compare the job you do most. A media transcription tool and a shortcut you use all day overlap, but they solve different needs.",
     sources: [
       {
         label: "MacWhisper features, platforms and plans",
@@ -198,9 +199,9 @@ export const comparisons: Comparison[] = [
     slug: "aqua-voice",
     name: "Aqua Voice",
     category: "Contextual dictation",
-    summary: "Dictation with context and specialized vocabulary support.",
+    summary: "Dictation that reads context, with custom vocabulary.",
     intro:
-      "Aqua Voice focuses on contextual dictation for Mac and Windows. DeepType offers a Mac workflow with an explicitly local speech processing path.",
+      "Aqua Voice is built around contextual dictation on Mac and Windows. DeepType is a Mac workflow with a local speech path it can document.",
     facts: [
       "Mac and Windows",
       "Cloud dictation is offered; check the selected mode",
@@ -210,11 +211,11 @@ export const comparisons: Comparison[] = [
       "Contextual dictation and custom vocabulary",
     ],
     betterFor:
-      "You want local transcription as a fixed requirement, without depending on a service connection or configuring a cloud account.",
+      "You need local transcription as a fixed rule, without a service connection or a cloud account to set up.",
     alternativeFor:
-      "You want contextual dictation across Mac and Windows and are comfortable checking the processing and plan details for your setup.",
+      "You want contextual dictation on Mac and Windows, and you will check the processing and plan details for your setup.",
     takeaway:
-      "Do not assume all Aqua modes have the same offline behavior. Its own FAQ recommends checking support for your platform, app version and mode.",
+      "Do not assume every Aqua mode works offline. Its own FAQ says to check support for your platform, app version and mode.",
     sources: [
       { label: "Aqua Voice product and plans", url: "https://aquavoice.com/" },
       {
@@ -227,9 +228,9 @@ export const comparisons: Comparison[] = [
     slug: "apple-dictation",
     name: "Apple Dictation",
     category: "Built into macOS",
-    summary: "The built in option, with no extra dictation app to install.",
+    summary: "The built in option. Nothing extra to install.",
     intro:
-      "Apple Dictation is a sensible starting point for occasional voice typing. DeepType adds selectable speech models, vocabulary replacements and local transcript history.",
+      "Apple Dictation is a fine start for occasional voice typing. DeepType adds selectable speech models, vocabulary replacements and local transcript history.",
     facts: [
       "Built into macOS",
       "On device or server dependent; check Keyboard settings",
@@ -239,11 +240,11 @@ export const comparisons: Comparison[] = [
       "Punctuation and formatting commands; features vary by language",
     ],
     betterFor:
-      "You want to select between Apple speech, Parakeet and Whisper, keep raw and corrected transcripts, or define repeatable phrase replacements.",
+      "You want to choose between Apple speech, Parakeet and Whisper, keep raw and corrected transcripts, or set phrase replacements you can repeat.",
     alternativeFor:
-      "You only need occasional dictation and the built in option works well for your language. Start in System Settings → Keyboard → Dictation.",
+      "You dictate now and then and the built in option works for your language. Start in System Settings → Keyboard → Dictation.",
     takeaway:
-      "Try the built in option first if it meets your needs. Apple’s Keyboard settings tell you whether your configuration requires internet or processes general dictation on your device.",
+      "Try the built in option first if it meets your needs. Apple’s Keyboard settings tell you whether your setup needs the internet or runs general dictation on the device.",
     sources: [
       {
         label: "Apple’s Mac Dictation guide",

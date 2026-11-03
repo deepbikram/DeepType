@@ -7,7 +7,6 @@ import {
   CpuIcon,
   CursorTextIcon,
   FlameIcon,
-  GithubLogoIcon,
   MicrophoneIcon,
   SealCheckIcon,
   SquareIcon,
@@ -72,8 +71,8 @@ const PANEL = "rounded-lg bg-white ring-1 ring-zinc-200";
 
 const TILES: Tile[] = [
   {
-    title: "Stays on your Mac",
-    body: "Built in models transcribe your speech on your Mac, with no account and no cloud fallback. Models download once, then work offline.",
+    title: "Local by default",
+    body: "Speech is transcribed on your Mac by models you install. No account, no cloud fallback. Once downloaded, they work offline.",
     span: "sm:col-span-2 lg:col-span-4",
     visual: (
       <div className="flex flex-col items-center gap-4">
@@ -93,18 +92,15 @@ const TILES: Tile[] = [
   },
   {
     title: "Hold to talk",
-    body: "Hold ⌥ Space while you speak and let go to finish. Switch to press to toggle, or record any shortcut with ⌘, ⌥ or ⌃, or an F key.",
+    body: "Hold F5 while you speak, release to finish. Prefer a toggle? Change it in Settings, or record your own shortcut.",
     span: "lg:col-span-2",
     visual: (
       <div className="flex flex-col items-center gap-4">
-        <div className="flex items-center gap-2 font-mono text-sm text-zinc-900">
-          <kbd className="animate-[keypress_2.4s_var(--ease-fluid)_infinite] rounded-lg border border-zinc-200 bg-white px-3 py-2 motion-reduce:animate-none">
-            ⌥
+        <div className="flex items-center gap-3 font-mono text-sm text-ink">
+          <kbd className="animate-[keypress_2.4s_var(--ease-fluid)_infinite] rounded-lg border border-ink/15 bg-white px-5 py-2 motion-reduce:animate-none">
+            F5
           </kbd>
-          <span className="text-zinc-400">+</span>
-          <kbd className="w-24 animate-[keypress_2.4s_var(--ease-fluid)_infinite] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-center motion-reduce:animate-none">
-            Space
-          </kbd>
+          <span className="text-xs text-ink/45">dictation key</span>
         </div>
         <div className={`flex p-1 text-xs ${PANEL}`}>
           <span className="rounded-md bg-ink px-2 py-1 text-white">Hold to talk</span>
@@ -114,8 +110,8 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "Pick your model",
-    body: "Nine built in models from Apple speech, Parakeet and Whisper. Parakeet covers English, Japanese and 25 European languages, and Whisper covers more. Or choose your own Sarvam AI, Smallest AI or OpenAI compatible API.",
+    title: "Your choice of model",
+    body: "Nine built-in models from Apple, Parakeet and Whisper. Or connect your own API if you prefer.",
     span: "lg:col-span-2",
     visual: (
       <ul className="w-full max-w-64 space-y-1 text-xs">
@@ -132,8 +128,8 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "Meeting notes",
-    body: "Notetaker transcribes your mic as Me and other apps as Them, next to your own notes. Apple Intelligence or Ollama then writes the summary, decisions and action items on your Mac.",
+    title: "Meetings",
+    body: "Notetaker writes down your side of the call and, on macOS 14.2 or later, the other side, beside your own notes. Apple Intelligence or Ollama can then draft the summary, decisions and action items on your Mac.",
     span: "sm:col-span-2 lg:col-span-4",
     visual: (
       <div className="flex w-full max-w-lg items-center gap-3">
@@ -160,8 +156,8 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "A style for every app",
-    body: "Set a tone for personal chats, work apps, email and everything else. Casual drops the final period, very casual drops capitals too, and formal leaves your words alone. Tones apply to English.",
+    title: "A tone for each app",
+    body: "Personal chats, work, email, everything else. Each can have its own tone. Casual drops the final period, very casual drops capitals, formal leaves your words alone. Styles apply to English.",
     span: "lg:col-span-3",
     visual: (
       <div className="flex w-full max-w-72 flex-col gap-3">
@@ -181,7 +177,7 @@ const TILES: Tile[] = [
   },
   {
     title: "Cleanup you choose",
-    body: "Light, the default, drops English ums, repeats and false starts. Medium also edits for clarity with your notes model, on your Mac with Apple Intelligence or Ollama. None keeps every word.",
+    body: "Light removes English filler, repeats and false starts. Medium also edits for clarity with a local notes model. None keeps every word.",
     span: "lg:col-span-3",
     visual: (
       <div className="flex flex-col items-center gap-4">
@@ -204,8 +200,8 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "Voice commands",
-    body: "Say comma, question mark or new paragraph as you talk. Say scratch that to delete the last sentence. Works in English.",
+    title: "Spoken commands",
+    body: "Say comma, question mark or new paragraph as you speak. Say scratch that to remove the last sentence. English only.",
     span: "lg:col-span-2",
     visual: (
       <ul className="space-y-2 text-xs">
@@ -220,8 +216,8 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "Learns your words",
-    body: "Add names and terms as hints and replacements. Fix a word in History, or right after a paste, and DeepType learns it.",
+    title: "Your vocabulary",
+    body: "Add names and terms, or fix a word in History or just after a paste. DeepType remembers the correction next time.",
     span: "lg:col-span-2",
     visual: (
       <ul className="space-y-2 text-xs">
@@ -237,8 +233,8 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "Types where you were",
-    body: "The text lands in the app you were using. If paste is blocked, it is copied to your clipboard so nothing is lost.",
+    title: "Where you were typing",
+    body: "Text lands in the app you were already using. If a field blocks paste, it is copied so nothing is lost.",
     span: "lg:col-span-2",
     visual: (
       <div className="flex w-full max-w-64 flex-col items-start gap-2">
@@ -254,8 +250,8 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "History you control",
-    body: "Dictations stay on your Mac with the raw and the corrected text. Use Original brings back exactly what you said, and history turns off whenever you like.",
+    title: "History",
+    body: "Raw and corrected text stay on your Mac. Use Original brings back exactly what you said. History can be turned off whenever you like.",
     span: "lg:col-span-2",
     visual: (
       <div className={`w-full max-w-72 p-3 text-xs ${PANEL}`}>
@@ -274,7 +270,7 @@ const TILES: Tile[] = [
   },
   {
     title: "Insights",
-    body: "See how many words you have spoken, your pace, the words cleanup saved you, which apps you dictate into and your daily streak. All of it is counted from history on your Mac.",
+    body: "Words spoken, pace, cleanup saved, the apps you dictate into, and your streak. Counted from history on your Mac.",
     span: "sm:col-span-2 lg:col-span-4",
     visual: (
       <div className="flex w-full max-w-lg flex-col gap-4">
@@ -300,7 +296,7 @@ const TILES: Tile[] = [
   },
   {
     title: "Updates you can trust",
-    body: "New versions arrive from GitHub Releases through Sparkle and install only when their EdDSA signature matches.",
+    body: "Updates install only after their signature checks out.",
     span: "lg:col-span-3",
     visual: (
       <div className={`flex w-full max-w-64 items-center gap-3 p-3 text-xs ${PANEL}`}>
@@ -316,13 +312,13 @@ const TILES: Tile[] = [
     ),
   },
   {
-    title: "Free and open source",
-    body: "Apache 2.0 licensed. Read every line on GitHub, report an issue, or build it yourself with make dev.",
+    title: "Free",
+    body: "No account, no subscription, no API key. Download it and dictate.",
     span: "lg:col-span-3",
     visual: (
       <div className="flex flex-col items-center gap-2 text-zinc-900">
-        <GithubLogoIcon className="size-10" />
-        <span className="font-mono text-sm">Apache 2.0</span>
+        <span className="font-serif text-4xl">Free</span>
+        <span className="font-mono text-sm">No subscription</span>
       </div>
     ),
   },
@@ -331,15 +327,15 @@ const TILES: Tile[] = [
 /** Feature grid for the home page, one tile per shipped capability. */
 export default function FeatureBento() {
   return (
-    <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+    <div className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-6">
       {TILES.map(({ title, body, span, visual }) => (
-        <article key={title} className={`flex flex-col rounded-2xl border border-zinc-200 bg-white p-2 ${span}`}>
-          <div aria-hidden className="flex h-44 items-center justify-center overflow-hidden rounded-lg bg-paper px-4">
+        <article key={title} className={`flex flex-col border-t border-ink/15 pt-8 ${span}`}>
+          <div aria-hidden className="flex h-44 items-center justify-center overflow-hidden rounded-sm bg-white/55 px-4 ring-1 ring-ink/10">
             {visual}
           </div>
-          <div className="p-4">
-            <h3 className="text-base font-medium text-zinc-900">{title}</h3>
-            <p className="mt-2 text-sm text-pretty text-zinc-500">{body}</p>
+          <div className="pt-5">
+            <h3 className="font-serif text-xl text-ink">{title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-pretty text-ink/60">{body}</p>
           </div>
         </article>
       ))}

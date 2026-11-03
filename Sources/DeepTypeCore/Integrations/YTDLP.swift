@@ -13,7 +13,7 @@ public enum YTDLPError: LocalizedError, Equatable {
         switch self {
         case .invalidLink: "Paste a full web link that starts with https://."
         case .notInstalled: "Install yt-dlp to transcribe links."
-        case .releaseUnavailable(let status): "GitHub didn’t return yt-dlp (HTTP \(status)). Try again later."
+        case .releaseUnavailable(let status): "The yt-dlp release feed didn’t return a download (HTTP \(status)). Try again later."
         case .unverified: "The downloaded yt-dlp didn’t match its published checksum, so it wasn’t installed."
         case .download(let reason): "Couldn’t download this link. \(reason)"
         }
