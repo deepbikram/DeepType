@@ -30,19 +30,21 @@ jobs:
         run: |
           [[ "$GITHUB_REF_NAME" == "v$(tr -d '[:space:]' < VERSION)" ]] || { echo "tag $GITHUB_REF_NAME != VERSION $(cat VERSION)"; exit 1; }
 
-      - name: Build app (release, arm64)
-        run: bash scripts/build-app.sh release arm64
+      - name: Build app (release, both archs)
+        run: |
+          bash scripts/build-app.sh release arm64
+          bash scripts/build-app.sh release x86_64
 
-      - name: Package DMG
+      - name: Package DMGs
         run: |
           pip install dmgbuild
-          BIN_DIR="$(swift build -c release --arch arm64 --show-bin-path)"
-          VERSION="$(tr -d '[:space:]' < VERSION)"
-          DMG="DeepType-${VERSION}-arm64.dmg"
-          # ponytail: styled drag-and-drop DMG via scripts/create-dmg.sh
-          # (dmgbuild writes icon positions + background headless).
-          bash scripts/create-dmg.sh "$BIN_DIR/DeepType.app" "$DMG"
-          echo "DMG=$DMG" >> "$GITHUB_ENV"
+          for arch in arm64 x86_64; do
+            BIN_DIR="$(swift build -c release --arch "$arch" --show-bin-path)"
+            # ponytail: stable name (no version) so /releases/latest/download/$DMG never 404s.
+            bash scripts/create-dmg.sh "$BIN_DIR/DeepType.app" "DeepType-$arch.dmg"
+          done
+          echo "DMG_ARM=DeepType-arm64.dmg" >> "$GITHUB_ENV"
+          echo "DMG_INTEL=DeepType-x86_64.dmg" >> "$GITHUB_ENV"
 
       - name: Generate appcast
         if: startsWith(github.ref, 'refs/tags/')
@@ -51,7 +53,7 @@ jobs:
           SIGN_UPDATE="$(find .build/artifacts -path '*/Sparkle/bin/sign_update' | head -1)"
           KEY_FILE="$(mktemp)"
           printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY_FILE"
-          SIGNATURE="$("$SIGN_UPDATE" --ed-key-file "$KEY_FILE" "$DMG")"
+          SIGNATURE="$("$SIGN_UPDATE" --ed-key-file "$KEY_FILE" "$DMG_ARM")"
           rm -f "$KEY_FILE"
           {
             echo '<?xml version="1.0" encoding="utf-8"?>'
@@ -66,7 +68,7 @@ jobs:
             echo "            <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>"
             echo "            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>"
             echo "            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>"
-            echo "            <enclosure url=\"https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$DMG\" type=\"application/octet-stream\" $SIGNATURE/>"
+            echo "            <enclosure url=\"https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$DMG_ARM\" type=\"application/octet-stream\" $SIGNATURE/>"
             echo '        </item>'
             echo '    </channel>'
             echo '</rss>'
@@ -78,7 +80,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DeepType-macOS-arm64
+          name: DeepType-macOS
           path: |
             DeepType-*.dmg
             appcast.xml
@@ -86,9 +88,9 @@ jobs:
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          gh release create "$GITHUB_REF_NAME" "$DMG" "$APPCAST" \
+          gh release create "$GITHUB_REF_NAME" "$DMG_ARM" "$DMG_INTEL" "$APPCAST" \
             --title "DeepType $GITHUB_REF_NAME" \
             --notes "Unsigned build (no notarization): on first launch, right-click DeepType.app > Open, or System Settings > Privacy & Security > Open Anyway." \
-            --latest || gh release upload "$GITHUB_REF_NAME" "$DMG" "$APPCAST" --clobber
+            --latest || gh release upload "$GITHUB_REF_NAME" "$DMG_ARM" "$DMG_INTEL" "$APPCAST" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
